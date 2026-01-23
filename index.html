@@ -320,17 +320,37 @@
         .modal-card {
             background: var(--bg-dark);
             border-radius: 20px;
-            padding: 2rem;
+            padding: 2.5rem;
             max-width: 650px;
             width: 92%;
             border: 1px solid var(--border);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
         }
 
         .modal-card h2 {
             font-size: 1.3rem;
             margin-bottom: 1.5rem;
             color: var(--primary);
+            padding-right: 30px;
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            line-height: 1;
+            transition: var(--transition);
+        }
+
+        .modal-close:hover {
+            color: var(--primary);
+            transform: scale(1.1);
         }
 
         .field {
@@ -483,6 +503,7 @@
     <!-- Modals -->
     <div class="modal" id="modal-themes">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('themes')">×</button>
             <h2>🌈 테마 갤러리</h2>
             <div class="theme-grid" id="theme-grid"></div>
             <div style="margin-top:1.5rem;"><button class="btn btn-secondary" style="width:100%;"
@@ -491,6 +512,7 @@
     </div>
     <div class="modal" id="modal-toc">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('toc')">×</button>
             <h2>📑 목차 생성</h2>
             <div class="field"><label>스타일</label><select id="toc-style">
                     <option value="box">Modern Box</option>
@@ -501,6 +523,7 @@
     </div>
     <div class="modal" id="modal-seo">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('seo')">×</button>
             <h2>🔍 JSON-LD</h2>
             <div class="field"><label>타입</label><select id="seo-type">
                     <option value="Article">Article</option>
@@ -514,6 +537,7 @@
     </div>
     <div class="modal" id="modal-h">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('h')">×</button>
             <h2>제목 삽입</h2>
             <div class="field"><label>레벨</label><select id="h-lv">
                     <option value="2">H2</option>
@@ -525,6 +549,7 @@
     </div>
     <div class="modal" id="modal-img">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('img')">×</button>
             <h2>이미지 삽입</h2>
             <div class="field"><label>URL</label><input type="text" id="img-url"></div>
             <div class="field"><label>Alt</label><input type="text" id="img-alt" value="이미지"></div><button
@@ -533,6 +558,7 @@
     </div>
     <div class="modal" id="modal-cta">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('cta')">×</button>
             <h2>쿠팡 버튼</h2>
             <div class="field"><label>문구</label><input type="text" id="cta-txt" value="쿠팡에서 확인하기"></div>
             <div class="field"><label>URL</label><input type="text" id="cta-url"></div><button class="btn btn-primary"
@@ -541,6 +567,7 @@
     </div>
     <div class="modal" id="modal-br">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('br')">×</button>
             <h2>줄바꿈</h2>
             <div class="field"><label>개수</label><select id="br-cnt">
                     <option value="2">2줄</option>
@@ -550,6 +577,7 @@
     </div>
     <div class="modal" id="modal-tbl">
         <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('tbl')">×</button>
             <h2>테이블</h2>
             <div style="display:flex; gap:10px;"><input type="number" id="tbl-r" value="3" placeholder="행"><input
                     type="number" id="tbl-c" value="2" placeholder="열"></div><button class="btn btn-primary"
@@ -662,6 +690,18 @@
 
         function openModal(id) { document.getElementById('modal-' + id).classList.add('active'); }
         function closeModal(id) { document.getElementById('modal-' + id).classList.remove('active'); }
+
+        // Close modal on background click or ESC key
+        window.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal')) {
+                e.target.classList.remove('active');
+            }
+        });
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
+            }
+        });
         function insAt(t) { editor.replaceRange(t + '\n', editor.getCursor()); editor.focus(); }
         function insH() { insAt(`<h${document.getElementById('h-lv').value}>${document.getElementById('h-txt').value}</h${document.getElementById('h-lv').value}>`); closeModal('h'); }
         function insImg() { insAt(`<img src="${document.getElementById('img-url').value}" alt="${document.getElementById('img-alt').value}">`); closeModal('img'); }
