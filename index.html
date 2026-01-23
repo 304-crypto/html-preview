@@ -185,8 +185,68 @@
         .CodeMirror {
             height: 100% !important;
             font-size: 14px;
-            background: #010409 !important;
             font-family: 'Fira Code', 'Consolas', monospace;
+            transition: background 0.3s;
+        }
+
+        /* Editor color adjustment based on mode */
+        body:not(.dark-mode) .CodeMirror {
+            background: #ffffff !important;
+            color: #000 !important;
+        }
+
+        body.dark-mode .CodeMirror {
+            background: #010409 !important;
+            color: #f8f8f2 !important;
+        }
+
+        body.dark-mode .CodeMirror-gutters {
+            background: #010409 !important;
+            border-right: 1px solid #333;
+        }
+
+        body.dark-mode .CodeMirror-linenumber {
+            color: #888 !important;
+        }
+
+        body.dark-mode .cm-tag {
+            color: #f92672 !important;
+        }
+
+        body.dark-mode .cm-attribute {
+            color: #a6e22e !important;
+        }
+
+        body.dark-mode .cm-string {
+            color: #e6db74 !important;
+        }
+
+        body.dark-mode .cm-atom {
+            color: #ae81ff !important;
+        }
+
+        body.dark-mode .cm-comment {
+            color: #75715e !important;
+        }
+
+        body.dark-mode .cm-meta {
+            color: #f8f8f2 !important;
+        }
+
+        body.dark-mode .cm-qualifier {
+            color: #a6e22e !important;
+        }
+
+        body.dark-mode .cm-builtin {
+            color: #66d9ef !important;
+        }
+
+        body.dark-mode .cm-bracket {
+            color: #f8f8f2 !important;
+        }
+
+        body.dark-mode .cm-keyword {
+            color: #f92672 !important;
         }
 
         .cm-highlight-flash {
@@ -549,6 +609,7 @@
 
         function apply() {
             document.body.classList.toggle('dark-mode', state.dark);
+            document.getElementById('dark-toggle').textContent = state.dark ? '☀️' : '🌙';
             editor.setOption('theme', state.dark ? 'monokai' : 'default');
             document.querySelector('.CodeMirror').style.fontSize = state.font + 'px';
             document.getElementById('font-size-val').textContent = state.font + 'px';
