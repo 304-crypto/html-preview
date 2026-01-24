@@ -255,20 +255,22 @@
         .preview-content {
             flex: 1;
             overflow: auto;
-            display: flex;
-            justify-content: center;
             padding: 2.5rem;
             background: #f1f5f9;
+            height: auto;
+            position: relative;
         }
 
         .preview-viewport {
             background: white;
             transform-origin: top center;
-            transition: var(--transition);
+            transition: transform 0.3s;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.12);
             border-radius: 4px;
             overflow: hidden;
             position: relative;
+            height: auto;
+            min-height: 100%;
         }
 
         iframe#preview-frame {
@@ -670,6 +672,7 @@
             document.getElementById('viewport').style.transform = `scale(${state.scale})`;
             document.getElementById('scale-val').textContent = Math.round(state.scale * 100) + '%';
             setVWidth(state.v === '100' ? '100%' : state.v + 'px', state.v);
+            render(); // Recalculate height with new scale
         }
 
         function toggleDarkMode() { state.dark = !state.dark; localStorage.setItem('d', state.dark); apply(); render(); }
@@ -679,12 +682,13 @@
 
         function render() {
             const frame = document.getElementById('preview-frame');
+            const viewport = document.getElementById('viewport');
             const doc = frame.contentDocument;
             const code = editor.getValue();
             const t = THEMES[state.t];
             const css = `<style>
-                body { font-family: 'Segoe UI', sans-serif; line-height: 1.8; color: #333; margin: 0; padding: 20px; background: transparent; }
-                .wrap { max-width: 800px; margin: 0 auto; min-height: 100vh; }
+                body { font-family: 'Segoe UI', sans-serif; line-height: 1.8; color: #333; margin: 0; padding: 25px; background: transparent; overflow: visible; }
+                .wrap { max-width: 800px; margin: 0 auto; padding-bottom: 50px; }
                 br { display: block; margin: 15px 0; content: ""; }
                 img { max-width: 100%; width: 100%; height: auto; border-radius: 12px; display: block; margin: 25px auto; box-shadow: 0 4px 20px rgba(0,0,0,0.1); cursor: pointer; }
                 h2 { color: ${t.h2}; border-bottom: 3px solid ${t.h2}; padding-bottom: 10px; margin: 55px 0 25px 0; font-size: 1.6rem; }
@@ -698,14 +702,18 @@
             </style>`;
             doc.open(); doc.write(`${css}<body><div class="wrap" id="wp-wrap">${code}</div></body>`); doc.close();
 
-            // Sync iframe height to content
             const syncHeight = () => {
-                frame.style.height = 'auto';
-                frame.style.height = (doc.documentElement.scrollHeight + 50) + 'px';
+                const h = doc.documentElement.scrollHeight;
+                frame.style.height = h + 'px';
+                viewport.style.height = ((h + 100) * state.scale) + 'px';
             };
-            setTimeout(syncHeight, 100);
-            setTimeout(syncHeight, 1000);
-            doc.querySelectorAll('img').forEach(img => img.onload = syncHeight);
+
+            // Immediate sync + observe for images/changes
+            setTimeout(syncHeight, 50);
+            if (doc.body) {
+                const observer = new ResizeObserver(syncHeight);
+                observer.observe(doc.body);
+            }
 
             doc.body.onclick = (e) => {
                 if (e.target === doc.body || e.target.classList.contains('wrap')) { openModal('img'); return; }
