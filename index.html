@@ -820,7 +820,44 @@
             let c = editor.getValue(); hs.forEach((h, i) => { const tag = `<${h.tagName.toLowerCase()}`; c = c.replace(new RegExp(tag + '(?![^>]*id=)', 'i'), `${tag} id="s${i + 1}"`); });
             editor.setValue(c); insAt(t); closeModal('toc');
         }
-        function makeJSONLD() { state.jsonld = `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": document.getElementById('seo-type').value, "headline": "제목" })}<\/script>`; document.getElementById('seo-p').innerText = state.jsonld; document.getElementById('seo-ins').style.display = 'block'; }
+        function makeJSONLD() {
+            const type = document.getElementById('seo-type').value;
+            const doc = document.getElementById('preview-frame').contentDocument;
+            let schema = { "@context": "https://schema.org", "@type": type };
+
+            if (type === 'FAQPage') {
+                const faqs = [];
+                // Find all paragraphs and look for Q/A patterns
+                const elms = Array.from(doc.querySelectorAll('p, div, strong, b'));
+                elms.forEach((el, i) => {
+                    const txt = el.innerText.trim();
+                    if (/^Q\d+\./.test(txt)) {
+                        // Find the next element that starts with 'A.'
+                        for (let j = i + 1; j < Math.min(i + 5, elms.length); j++) {
+                            const aTxt = elms[j].innerText.trim();
+                            if (aTxt.startsWith('A.')) {
+                                faqs.push({
+                                    "@type": "Question",
+                                    "name": txt.replace(/^Q\d+\.\s*/, '').trim(),
+                                    "acceptedAnswer": {
+                                        "@type": "Answer",
+                                        "text": aTxt.replace(/^A\.\s*/, '').trim()
+                                    }
+                                });
+                                break;
+                            }
+                        }
+                    }
+                });
+                if (faqs.length > 0) schema.mainEntity = faqs;
+            } else {
+                schema.headline = doc.querySelector('h2')?.innerText || "블로그 포스팅 제목";
+            }
+
+            state.jsonld = `<script type="application/ld+json">${JSON.stringify(schema, null, 2)}<\/script>`;
+            document.getElementById('seo-p').innerText = state.jsonld;
+            document.getElementById('seo-ins').style.display = 'block';
+        }
         function insJSONLD() { insAt(state.jsonld); closeModal('seo'); }
         function copyHTML() { navigator.clipboard.writeText(editor.getValue()).then(() => toast('Copied!')); }
         function saveToLocal() { localStorage.setItem('c', editor.getValue()); toast('Saved!'); }
