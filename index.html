@@ -422,7 +422,7 @@
 <body class="light-mode">
     <header class="header">
         <div class="header-top">
-            <h1>🎨 Blog HTML Editor <span style="font-size:0.75rem; opacity:0.8;">PRO MASTER v2.1</span></h1>
+            <h1>🎨 Blog HTML Editor <span style="font-size:0.75rem; opacity:0.8;">PRO MASTER v2.2</span></h1>
             <div class="main-actions">
                 <button class="btn btn-secondary btn-icon" id="dark-toggle" onclick="toggleDarkMode()">☀️</button>
                 <div class="separator"></div>
@@ -799,6 +799,9 @@
             const target = document.getElementById('url-target').value;
             insAt(`<a href="${url}" target="${target}">${txt}</a>`);
             closeModal('url');
+        }
+        function insertFairTrade() {
+            insAt('<p style="color: #888; font-size: 13px; text-align: center; margin-top: 50px;">파트너스 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.</p>');
         }
         function generateTOC() {
             const hs = document.getElementById('preview-frame').contentDocument.querySelectorAll('h2, h3');
