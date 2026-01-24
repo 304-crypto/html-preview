@@ -436,6 +436,7 @@
                 <button class="btn btn-primary" onclick="copyHTML()">📋 전체 복사</button>
                 <button class="btn btn-success" onclick="saveToLocal()">💾 저장</button>
                 <button class="btn btn-danger" onclick="resetEditor()">🔄 리셋</button>
+                <button class="btn btn-danger" style="background:#dc2626;" onclick="clearCache()">🧹 캐시 삭제</button>
             </div>
         </div>
         <div class="toolbar">
@@ -788,4 +789,66 @@
             h += '</tbody></table>'; insAt(h); closeModal('tbl');
         }
         function insURL() {
-            const url = document.getElementById('url-val').
+            const url = document.getElementById('url-val').value;
+            const txt = document.getElementById('url-txt').value;
+            const target = document.getElementById('url-target').value;
+            insAt(`<a href="${url}" target="${target}">${txt}</a>`);
+            closeModal('url');
+        }
+        function generateTOC() {
+            const hs = document.getElementById('preview-frame').contentDocument.querySelectorAll('h2, h3');
+            if (!hs.length) return;
+            let t = '<div class="meta-box"><strong>📑 목차</strong><br>';
+            hs.forEach((h, i) => { t += `<a href="#s${i + 1}" style="display:block;margin-top:5px;padding-left:${h.tagName === 'H3' ? '20px' : '0'};">- ${h.innerText}</a>`; });
+            t += '</div>';
+            let c = editor.getValue(); hs.forEach((h, i) => { const tag = `<${h.tagName.toLowerCase()}`; c = c.replace(new RegExp(tag + '(?![^>]*id=)', 'i'), `${tag} id="s${i + 1}"`); });
+            editor.setValue(c); insAt(t); closeModal('toc');
+        }
+        function makeJSONLD() { state.jsonld = `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": document.getElementById('seo-type').value, "headline": "제목" })}<\/script>`; document.getElementById('seo-p').innerText = state.jsonld; document.getElementById('seo-ins').style.display = 'block'; }
+        function insJSONLD() { insAt(state.jsonld); closeModal('seo'); }
+        function copyHTML() { navigator.clipboard.writeText(editor.getValue()).then(() => toast('Copied!')); }
+        function saveToLocal() { localStorage.setItem('c', editor.getValue()); toast('Saved!'); }
+        function resetEditor() { if (confirm('리셋하시겠습니까? (작성 중인 내용이 초기화됩니다)')) { localStorage.removeItem('c'); editor.setValue(getDefault()); render(); } }
+        function clearCache() { if (confirm('모든 설정(테마, 글자 크기 등)과 저장된 내용을 완전히 삭제하고 초기화할까요?')) { localStorage.clear(); location.reload(); } }
+        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
+        function setupRes() {
+            const r = document.getElementById('resizer'), lp = document.getElementById('editor-pane'), rp = document.getElementById('preview-pane');
+            r.onmousedown = (e) => { const x = e.clientX, w = lp.offsetWidth; document.onmousemove = (me) => { const p = (w + (me.clientX - x)) / r.parentNode.offsetWidth * 100; lp.style.width = p + '%'; rp.style.width = (100 - p) + '%'; }; document.onmouseup = () => { document.onmousemove = null; editor.refresh(); }; };
+        }
+        function getDefault() {
+            return `<div style="max-width: 800px; margin: 0 auto; line-height: 1.8; color: #333;">
+  <p style="background-color: #E8F5E9; padding: 20px; border-radius: 8px; font-size: 15px; margin-bottom: 35px; border: 1px solid #dcdcdc; line-height: 1.8;">
+    <strong>ISA 계좌</strong>에 대해 궁금하신가요? 2026년 기준, 주식과 ETF 투자의 필수품이 된 중개형 ISA의 비과세 혜택과 절세 효과를 완벽하게 분석했습니다. 남들 다 받는 세금 혜택, 당신만 놓치고 있을 수 있습니다.
+  </p>
+  <p style="font-size: 16px; line-height: 1.8; margin-bottom: 30px; font-weight: 600; color: #2c3e50;">
+    배당금 1,000만 원 받았을 때, 일반 계좌는 154만 원을 세금으로 냅니다. 💸 하지만 ISA 계좌는 세금이 '0원'일 수도 있습니다. 똑같은 수익을 내고도 세금 때문에 최종 자산이 수천만 원 차이 나는 이유, 바로 이 통장 하나 때문입니다.
+  </p>
+  <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 40px;">
+    <strong>📑 목차</strong>
+    <ol style="margin: 0; padding-left: 20px; line-height: 2.0;">
+      <li><a href="#section1">ISA 계좌, 도대체 왜 필수인가?</a></li>
+      <li><a href="#section2">중개형 ISA vs 신탁형/일임형 차이점</a></li>
+      <li><a href="#section3">⚠️ 3년 의무 가입 기간의 함정</a></li>
+    </ol>
+  </div>
+  <h2 id="section1">ISA 계좌, 도대체 왜 필수인가?</h2>
+  <p><span style="background-color:#fff3cd; padding:2px 6px; border-radius:6px;"><b>ISA 계좌</b></span>(개인종합자산관리계좌)는 하나의 통장에서 예금, 적금, 주식, ETF 등 다양한 금융 상품을 굴릴 수 있는 만능 통장입니다.</p>
+  <h3>손실은 빼고 이익에만 과세</h3>
+  <p>일반 주식 계좌와 달리 ISA는 손익 통산을 통해 세금을 획기적으로 줄여줍니다.</p>
+  <div style="text-align:center; margin:34px 0;">
+    <a href="https://www.coupang.com" class="cta-btn">💰 내 절세 금액 30초 계산하기 ›</a>
+  </div>
+  <h2 id="section2">중개형 ISA vs 신탁형/일임형 차이점</h2>
+  <p>최근 가입자의 80% 이상이 직접 주식 매매가 가능한 <b>중개형 ISA</b>를 선택하고 있습니다.</p>
+  <h2 id="section3">⚠️ 3년 의무 가입 기간의 함정</h2>
+  <p>비과세 혜택을 위해서는 3년의 가입 유지가 필수입니다.</p>
+  <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 40px 0; font-size: 13px; color: #666;">
+    <p><strong>⚠️ 면책 조항:</strong> 본 콘텐츠는 정보 제공 목적으로만 작성되었습니다.</p>
+  </div>
+</div>`;
+        }
+        init();
+    </script>
+</body>
+
+</html>
