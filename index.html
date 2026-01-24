@@ -449,6 +449,14 @@
             <button class="btn btn-secondary" onclick="openModal('seo')">🔍 SEO JSON-LD</button>
             <div class="separator"></div>
             <div class="toolbar-group">
+                <button class="btn btn-secondary btn-icon" title="Bold" onclick="wrapSelection('b')"><b>B</b></button>
+                <button class="btn btn-secondary btn-icon" title="Underline"
+                    onclick="wrapSelection('u')"><u>U</u></button>
+                <button class="btn btn-secondary btn-icon" title="Highlight" onclick="insHighlight()"
+                    style="color: #f1c40f;">🖍️</button>
+            </div>
+            <div class="separator"></div>
+            <div class="toolbar-group">
                 <button class="btn btn-secondary" onclick="openModal('h')">H#</button>
                 <button class="btn btn-secondary" onclick="openModal('img')">🖼️ 이미지</button>
                 <button class="btn btn-secondary" onclick="openModal('url')">🔗 링크</button>
@@ -551,9 +559,29 @@
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('img')">×</button>
             <h2>이미지 삽입</h2>
-            <div class="field"><label>URL</label><input type="text" id="img-url"></div>
-            <div class="field"><label>Alt</label><input type="text" id="img-alt" value="이미지"></div><button
-                class="btn btn-primary" style="width:100%;" onclick="insImg()">삽입</button>
+            <div class="field"><label>URL (워드프레스 미디어 링크)</label><input type="text" id="img-url"></div>
+            <div class="field"><label>Alt 설명</label><input type="text" id="img-alt" value="이미지"></div>
+            <div class="field"
+                style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
+                <input type="checkbox" id="wp-mode" style="width: auto; margin: 0;">
+                <label for="wp-mode" style="margin: 0; color: #10b981; font-weight: 800;">워드프레스 구텐베르크 호환 모드</label>
+            </div>
+            <button class="btn btn-primary" style="width:100%; margin-top: 1rem;" onclick="insImg()">삽입</button>
+        </div>
+    </div>
+    <div class="modal" id="modal-url">
+        <div class="modal-card">
+            <button class="modal-close" onclick="closeModal('url')">×</button>
+            <h2>링크 삽입</h2>
+            <div class="field"><label>텍스트</label><input type="text" id="url-txt" placeholder="표시할 글자"></div>
+            <div class="field"><label>주소</label><input type="text" id="url-val" placeholder="https://..."></div>
+            <div class="field"><label>링크 타겟</label><select id="url-target">
+                    <option value="_self">현재 창 (_self)</option>
+                    <option value="_blank">새 창 (_blank)</option>
+                </select></div>
+            <div style="display:flex; gap:10px;"><button class="btn btn-secondary" style="flex:1;"
+                    onclick="closeModal('url')">취소</button><button class="btn btn-primary" style="flex:1;"
+                    onclick="insURL()">삽입</button></div>
         </div>
     </div>
     <div class="modal" id="modal-cta">
@@ -561,8 +589,12 @@
             <button class="modal-close" onclick="closeModal('cta')">×</button>
             <h2>쿠팡 버튼</h2>
             <div class="field"><label>문구</label><input type="text" id="cta-txt" value="쿠팡에서 확인하기"></div>
-            <div class="field"><label>URL</label><input type="text" id="cta-url"></div><button class="btn btn-primary"
-                style="width:100%;" onclick="insCTA()">삽입</button>
+            <div class="field"><label>URL</label><input type="text" id="cta-url"></div>
+            <div class="field"><label>링크 타겟</label><select id="cta-target">
+                    <option value="_self">현재 창 (_self)</option>
+                    <option value="_blank">새 창 (_blank)</option>
+                </select></div>
+            <button class="btn btn-primary" style="width:100%;" onclick="insCTA()">삽입</button>
         </div>
     </div>
     <div class="modal" id="modal-br">
@@ -702,10 +734,51 @@
                 document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
             }
         });
+
+        function wrapSelection(tag) {
+            const selection = editor.getSelection();
+            editor.replaceSelection(`<${tag}>${selection}</${tag}>`);
+            if (!selection) {
+                const cur = editor.getCursor();
+                editor.setCursor(cur.line, cur.ch - (tag.length + 3));
+            }
+            editor.focus();
+        }
+
+        function insHighlight() {
+            const selection = editor.getSelection();
+            const open = '<span style="background-color:#fff3cd; padding:2px 6px; border-radius:6px;"><b>';
+            const close = '</b></span>';
+            editor.replaceSelection(open + selection + close);
+            if (!selection) {
+                const cur = editor.getCursor();
+                editor.setCursor(cur.line, cur.ch - close.length);
+            }
+            editor.focus();
+        }
+
         function insAt(t) { editor.replaceRange(t + '\n', editor.getCursor()); editor.focus(); }
         function insH() { insAt(`<h${document.getElementById('h-lv').value}>${document.getElementById('h-txt').value}</h${document.getElementById('h-lv').value}>`); closeModal('h'); }
-        function insImg() { insAt(`<img src="${document.getElementById('img-url').value}" alt="${document.getElementById('img-alt').value}">`); closeModal('img'); }
-        function insCTA() { insAt(`<a href="${document.getElementById('cta-url').value}" class="cta-btn">🛒 ${document.getElementById('cta-txt').value} ›</a>`); closeModal('cta'); }
+        function insImg() {
+            const url = document.getElementById('img-url').value;
+            const alt = document.getElementById('img-alt').value;
+            const isWP = document.getElementById('wp-mode').checked;
+            let html = "";
+            if (isWP) {
+                html = `<figure class="wp-block-image size-full"><img src="${url}" alt="${alt}" class="wp-image-0" style="width: 100%; height: auto; border-radius: 12px;"/></figure>`;
+            } else {
+                html = `<img src="${url}" alt="${alt}">`;
+            }
+            insAt(html);
+            closeModal('img');
+        }
+        function insCTA() {
+            const url = document.getElementById('cta-url').value;
+            const txt = document.getElementById('cta-txt').value;
+            const target = document.getElementById('cta-target').value;
+            insAt(`\n<div style="text-align:center; margin:40px 0;">\n  <a href="${url}" target="${target}" class="cta-btn">🛒 ${txt} ›</a>\n</div>`);
+            closeModal('cta');
+        }
         function insBR() { insAt('<br>'.repeat(document.getElementById('br-cnt').value)); closeModal('br'); }
         function insTbl() {
             let h = '<table><thead><tr>';
@@ -714,54 +787,5 @@
             for (let i = 0; i < document.getElementById('tbl-r').value; i++) { h += '<tr>'; for (let j = 0; j < document.getElementById('tbl-c').value; j++)h += '<td>내용</td>'; h += '</tr>'; }
             h += '</tbody></table>'; insAt(h); closeModal('tbl');
         }
-        function generateTOC() {
-            const hs = document.getElementById('preview-frame').contentDocument.querySelectorAll('h2, h3');
-            if (!hs.length) return;
-            let t = '<div class="meta-box"><strong>📑 목차</strong><br>';
-            hs.forEach((h, i) => { t += `<a href="#s${i + 1}" style="display:block;margin-top:5px;padding-left:${h.tagName === 'H3' ? '20px' : '0'};">- ${h.innerText}</a>`; });
-            t += '</div>';
-            let c = editor.getValue(); hs.forEach((h, i) => { const tag = `<${h.tagName.toLowerCase()}`; c = c.replace(new RegExp(tag + '(?![^>]*id=)', 'i'), `${tag} id="s${i + 1}"`); });
-            editor.setValue(c); insAt(t); closeModal('toc');
-        }
-        function makeJSONLD() { state.jsonld = `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@type": document.getElementById('seo-type').value, "headline": "제목" })}<\/script>`; document.getElementById('seo-p').innerText = state.jsonld; document.getElementById('seo-ins').style.display = 'block'; }
-        function insJSONLD() { insAt(state.jsonld); closeModal('seo'); }
-        function copyHTML() { navigator.clipboard.writeText(editor.getValue()).then(() => toast('Copied!')); }
-        function saveToLocal() { localStorage.setItem('c', editor.getValue()); toast('Saved!'); }
-        function resetEditor() { if (confirm('Reset?')) { editor.setValue(getDefault()); render(); } }
-        function toast(m) { const t = document.getElementById('toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2000); }
-        function setupRes() {
-            const r = document.getElementById('resizer'), lp = document.getElementById('editor-pane'), rp = document.getElementById('preview-pane');
-            r.onmousedown = (e) => { const x = e.clientX, w = lp.offsetWidth; document.onmousemove = (me) => { const p = (w + (me.clientX - x)) / r.parentNode.offsetWidth * 100; lp.style.width = p + '%'; rp.style.width = (100 - p) + '%'; }; document.onmouseup = () => { document.onmousemove = null; editor.refresh(); }; };
-        }
-        function getDefault() {
-            return `<p style="background-color: #E8F5E9; padding: 20px; border-radius: 8px; font-size: 15px; margin-bottom: 35px; border: 1px solid #dcdcdc; line-height: 1.8;">
-    <strong>ISA 계좌</strong>에 대해 궁금하신가요? 2026년 기준, 주식과 ETF 투자의 필수품이 된 중개형 ISA의 비과세 혜택과 절세 효과를 완벽하게 분석했습니다. 남들 다 받는 세금 혜택, 당신만 놓치고 있을 수 있습니다.
-</p>
-<p style="font-size: 16px; line-height: 1.8; margin-bottom: 30px; font-weight: 600; color: #2c3e50;">
-    배당금 1,000만 원 받았을 때, 일반 계좌는 154만 원을 세금으로 냅니다. 💸 하지만 ISA 계좌는 세금이 '0원'일 수도 있습니다. 똑같은 수익을 내고도 세금 때문에 최종 자산이 수천만 원 차이 나는 이유, 바로 이 통장 하나 때문입니다.
-</p>
-<div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 40px;">
-    <strong>📑 목차</strong>
-    <ol style="margin: 0; padding-left: 20px; line-height: 2.0;">
-      <li><a href="#section1">ISA 계좌, 도대체 왜 필수인가?</a></li>
-      <li><a href="#section2">중개형 ISA vs 신탁형/일임형 차이점</a></li>
-      <li><a href="#section3">⚠️ 3년 의무 가입 기간의 함정</a></li>
-    </ol>
-</div>
-<h2 id="section1">ISA 계좌, 도대체 왜 필수인가?</h2>
-<p><span style="background-color:#fff3cd; padding:2px 6px; border-radius:6px;"><b>ISA 계좌</b></span>는 하나의 통장에서 주식, ETF 등을 굴릴 수 있는 만능 통장입니다.</p>
-<h3>손실은 빼고 이익에만 과세</h3>
-<p>수수료와 세금을 획기적으로 줄일 수 있는 강력한 절세 무기입니다.</p>
-<div style="text-align:center; margin:34px 0;">
-    <a href="https://www.coupang.com" class="cta-btn">💰 내 절세 금액 30초 계산하기 ›</a>
-</div>
-<h2 id="section2">중개형 ISA vs 신탁형/일임형 차이점</h2>
-<p>2021년 도입된 <b>중개형 ISA</b>는 투자자가 직접 운용할 수 있어 최근 가입자의 대다수가 선택하고 있습니다.</p>
-<h2 id="section3">⚠️ 3년 의무 가입 기간의 함정</h2>
-<p>혜택을 받으려면 3년 유지가 필수임을 꼭 기억하세요.</p>`;
-        }
-        init();
-    </script>
-</body>
-
-</html>
+        function insURL() {
+            const url = document.getElementById('url-val').
