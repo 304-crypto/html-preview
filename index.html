@@ -318,11 +318,32 @@
             padding: 2.5rem;
             max-width: 650px;
             width: 92%;
+            max-height: 90vh;
+            overflow-y: auto;
             border: 1px solid var(--border);
             box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
             position: relative;
         }
 
+
+        /* ============ 모달 스크롤바 스타일 ============ */
+        .modal-card::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-card::-webkit-scrollbar-track {
+            background: var(--bg-darker);
+            border-radius: 10px;
+        }
+
+        .modal-card::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 10px;
+        }
+
+        .modal-card::-webkit-scrollbar-thumb:hover {
+            background: var(--primary-glow);
+        }
         .modal-card h2 {
             font-size: 1.3rem;
             margin-bottom: 1.5rem;
