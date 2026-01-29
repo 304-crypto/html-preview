@@ -188,6 +188,17 @@
             font-family: 'Fira Code', 'Consolas', monospace;
             transition: background 0.3s;
         }
+        
+        .CodeMirror pre {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+            word-break: break-word !important;
+        }
+        
+        .CodeMirror-line {
+            white-space: pre-wrap !important;
+            word-wrap: break-word !important;
+        }
 
         /* Editor color adjustment based on mode */
         body:not(.dark-mode) .CodeMirror {
@@ -825,8 +836,19 @@
         };
 
         const editor = CodeMirror.fromTextArea(document.getElementById('cm-textarea'), {
-            mode: 'htmlmixed', theme: 'monokai', lineNumbers: true, lineWrapping: true,
-            indentUnit: 2, tabSize: 2, matchBrackets: true, extraKeys: { "Ctrl-Z": "undo", "Ctrl-Y": "redo" }
+            mode: 'htmlmixed',
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: true,
+            indentUnit: 2,
+            tabSize: 2,
+            matchBrackets: true,
+            autoCloseTags: true,
+            extraKeys: { 
+                "Ctrl-Z": "undo", 
+                "Ctrl-Y": "redo",
+                "Ctrl-Q": function(cm) { cm.foldCode(cm.getCursor()); }
+            }
         });
 
         function init() {
