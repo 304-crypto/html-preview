@@ -8,8 +8,10 @@
     <link rel="icon" type="image/png" href="favicon.png">
 
     <!-- Libraries (CDN Only) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
+    <link rel="stylesheet"
+        href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/matchesonscrollbar.css">
 
@@ -189,7 +191,6 @@
             transition: background 0.3s;
         }
 
-        /* Editor color adjustment based on mode */
         body:not(.dark-mode) .CodeMirror {
             background: #ffffff !important;
             color: #000 !important;
@@ -293,7 +294,7 @@
             background: var(--primary);
         }
 
-        /* ============ Modals ============ */
+        /* ============ Modals & Theme Grid ============ */
         .modal {
             display: none;
             position: fixed;
@@ -325,7 +326,6 @@
             position: relative;
         }
 
-        /* 모달 스크롤바 스타일 */
         .modal-card::-webkit-scrollbar {
             width: 8px;
         }
@@ -388,7 +388,6 @@
             color: var(--text-primary);
         }
 
-        /* ============ 컬러 도트 스타일 ============ */
         .color-dot {
             width: 32px;
             height: 32px;
@@ -458,18 +457,22 @@
         <div class="header-top">
             <h1>🎨 Blog HTML Editor <span style="font-size:0.75rem; opacity:0.8;">PRO MASTER v2.3</span></h1>
             <div class="main-actions">
-                <button class="btn btn-secondary btn-icon" id="dark-toggle" onclick="toggleDarkMode()">☀️</button>
+                <button class="btn btn-secondary btn-icon" id="dark-toggle"
+                    onclick="toggleDarkMode()">☀️</button>
                 <div class="separator"></div>
                 <button class="btn btn-primary" onclick="copyHTML()">📋 전체 복사</button>
                 <button class="btn btn-success" onclick="saveToLocal()">💾 저장</button>
                 <button class="btn btn-danger" onclick="resetEditor()">🔄 리셋</button>
-                <button class="btn btn-danger" style="background:#dc2626;" onclick="clearCache()">🧹 캐시 삭제</button>
+                <button class="btn btn-danger" style="background:#dc2626;"
+                    onclick="clearCache()">🧹 캐시 삭제</button>
             </div>
         </div>
         <div class="toolbar">
             <div class="toolbar-group">
-                <button class="btn btn-secondary btn-icon" title="Undo" onclick="editor.undo()">⟲</button>
-                <button class="btn btn-secondary btn-icon" title="Redo" onclick="editor.redo()">⟳</button>
+                <button class="btn btn-secondary btn-icon" title="Undo"
+                    onclick="editor.undo()">⟲</button>
+                <button class="btn btn-secondary btn-icon" title="Redo"
+                    onclick="editor.redo()">⟳</button>
             </div>
             <div class="separator"></div>
             <button class="btn btn-primary" onclick="openModal('themes')">🌈 테마 갤러리</button>
@@ -477,11 +480,12 @@
             <button class="btn btn-secondary" onclick="openModal('seo')">🔍 SEO JSON-LD</button>
             <div class="separator"></div>
             <div class="toolbar-group">
-                <button class="btn btn-secondary btn-icon" title="Bold" onclick="wrapSelection('b')"><b>B</b></button>
+                <button class="btn btn-secondary btn-icon" title="Bold"
+                    onclick="wrapSelection('b')"><b>B</b></button>
                 <button class="btn btn-secondary btn-icon" title="Underline"
                     onclick="wrapSelection('u')"><u>U</u></button>
-                <button class="btn btn-secondary btn-icon" title="Highlight" onclick="insHighlight()"
-                    style="color: #f1c40f;">🖍️</button>
+                <button class="btn btn-secondary btn-icon" title="Highlight"
+                    onclick="insHighlight()" style="color: #f1c40f;">🖍️</button>
             </div>
             <div class="separator"></div>
             <div class="toolbar-group">
@@ -491,14 +495,16 @@
                 <button class="btn btn-secondary" onclick="openModal('cta')">✨ 버튼</button>
                 <button class="btn btn-secondary" onclick="openModal('br')">↩️ BR</button>
                 <button class="btn btn-secondary" onclick="insertFairTrade()">⚖️ 공정</button>
-                <button class="btn btn-secondary btn-icon" title="Table" onclick="openModal('tbl')">▦</button>
+                <button class="btn btn-secondary btn-icon" title="Table"
+                    onclick="openModal('tbl')">▦</button>
             </div>
         </div>
     </header>
 
     <main class="workspace">
         <section class="pane" id="editor-pane">
-            <div class="pane-header"><span>HTML Code</span>
+            <div class="pane-header">
+                <span>HTML Code</span>
                 <div class="controls">
                     <div class="zoom-box">
                         <button class="btn" style="padding:2px 8px;" onclick="adjustFont(-1)">-</button>
@@ -511,7 +517,8 @@
         </section>
         <div id="resizer"></div>
         <section class="pane" id="preview-pane">
-            <div class="pane-header"><span>Preview</span>
+            <div class="pane-header">
+                <span>Preview</span>
                 <div class="controls">
                     <div class="zoom-box">
                         <button class="btn" style="padding:2px 8px;" onclick="adjustScale(-0.1)">-</button>
@@ -529,66 +536,91 @@
                 </div>
             </div>
             <div class="preview-content">
-                <div class="preview-viewport" id="viewport"><iframe id="preview-frame"></iframe></div>
+                <div class="preview-viewport" id="viewport">
+                    <iframe id="preview-frame"></iframe>
+                </div>
             </div>
         </section>
     </main>
 
     <div id="toast">Copy Success!</div>
 
-    <!-- Modals -->
+    <!-- 테마 갤러리 모달 -->
     <div class="modal" id="modal-themes">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('themes')">×</button>
             <h2>🌈 테마 갤러리</h2>
             <div class="theme-grid" id="theme-grid"></div>
-            <div style="margin-top:1.5rem;"><button class="btn btn-secondary" style="width:100%;"
-                    onclick="closeModal('themes')">닫기</button></div>
+            <div style="margin-top:1.5rem;">
+                <button class="btn btn-secondary" style="width:100%;"
+                    onclick="closeModal('themes')">닫기</button>
+            </div>
         </div>
     </div>
+
+    <!-- 목차 모달 -->
     <div class="modal" id="modal-toc">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('toc')">×</button>
             <h2>📑 목차 생성</h2>
-            <div class="field"><label>스타일</label><select id="toc-style">
+            <div class="field">
+                <label>스타일</label>
+                <select id="toc-style">
                     <option value="box">Modern Box</option>
                     <option value="list">Minimal List</option>
-                </select></div><button class="btn btn-primary" style="width:100%;" onclick="generateTOC()">생성 및
-                삽입</button>
+                </select>
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="generateTOC()">생성 및 삽입</button>
         </div>
     </div>
+
+    <!-- SEO JSON-LD 모달 -->
     <div class="modal" id="modal-seo">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('seo')">×</button>
             <h2>🔍 JSON-LD</h2>
-            <div class="field"><label>타입</label><select id="seo-type">
+            <div class="field">
+                <label>타입</label>
+                <select id="seo-type">
                     <option value="Article">Article</option>
                     <option value="FAQPage">FAQ</option>
-                </select></div>
+                </select>
+            </div>
             <div id="seo-p"
                 style="background:#000; color:#4ade80; padding:8px; font-size:0.75rem; font-family:monospace; margin-bottom:1rem;">
-            </div><button class="btn btn-success" id="seo-btn" onclick="makeJSONLD()">생성</button><button
-                class="btn btn-primary" id="seo-ins" style="display:none;" onclick="insJSONLD()">삽입</button>
+            </div>
+            <button class="btn btn-success" id="seo-btn" onclick="makeJSONLD()">생성</button>
+            <button class="btn btn-primary" id="seo-ins" style="display:none;"
+                onclick="insJSONLD()">삽입</button>
         </div>
     </div>
+
+    <!-- 제목 모달 -->
     <div class="modal" id="modal-h">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('h')">×</button>
             <h2>제목 삽입</h2>
-            <div class="field"><label>레벨</label><select id="h-lv">
+            <div class="field">
+                <label>레벨</label>
+                <select id="h-lv">
                     <option value="2">H2</option>
                     <option value="3">H3</option>
-                </select></div>
-            <div class="field"><label>내용</label><input type="text" id="h-txt"></div><button class="btn btn-primary"
-                style="width:100%;" onclick="insH()">삽입</button>
+                </select>
+            </div>
+            <div class="field">
+                <label>내용</label>
+                <input type="text" id="h-txt">
+            </div>
+            <button class="btn btn-primary" style="width:100%;" onclick="insH()">삽입</button>
         </div>
     </div>
-    <!-- 이미지 모달 (링크 + 크기 조절 기능) -->
+
+    <!-- 이미지 모달 -->
     <div class="modal" id="modal-img">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('img')">×</button>
             <h2>이미지 삽입</h2>
-            
+
             <div class="field">
                 <label>이미지 타입</label>
                 <select id="img-type" onchange="toggleImgLinkField()">
@@ -596,22 +628,22 @@
                     <option value="linked">링크가 있는 이미지</option>
                 </select>
             </div>
-            
+
             <div class="field">
                 <label>이미지 URL (워드프레스 미디어 링크)</label>
                 <input type="text" id="img-url">
             </div>
-            
+
             <div class="field">
                 <label>Alt 설명</label>
                 <input type="text" id="img-alt" value="이미지">
             </div>
-            
+
             <div class="field" id="img-link-field" style="display: none;">
                 <label>링크 URL (이미지 클릭 시 이동할 주소)</label>
                 <input type="text" id="img-link-url" placeholder="https://...">
             </div>
-            
+
             <div class="field" id="img-link-target-field" style="display: none;">
                 <label>링크 타겟</label>
                 <select id="img-link-target">
@@ -619,7 +651,7 @@
                     <option value="_self">현재 창 (_self)</option>
                 </select>
             </div>
-            
+
             <div class="field">
                 <label>이미지 크기</label>
                 <select id="img-size-preset" onchange="updateImgSizeSlider()">
@@ -630,24 +662,28 @@
                     <option value="custom">사용자 정의</option>
                 </select>
             </div>
-            
+
             <div class="field" id="img-size-slider-field" style="display: none;">
                 <label>사용자 정의 크기</label>
                 <input type="range" id="img-size-slider" min="20" max="100" value="100" step="5">
-                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary); margin-top: 5px;">
                     <span>20%</span>
-                    <span id="img-size-value" style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-weight: 500;">100%</span>
+                    <span id="img-size-value"
+                        style="background: var(--primary); color: white; padding: 2px 8px; border-radius: 4px; font-weight: 500;">100%</span>
                     <span>100%</span>
                 </div>
             </div>
-            
+
             <div class="field"
                 style="display: flex; align-items: center; gap: 10px; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 8px;">
                 <input type="checkbox" id="wp-mode" style="width: auto; margin: 0;">
-                <label for="wp-mode" style="margin: 0; color: #10b981; font-weight: 800;">워드프레스 구텐베르크 호환 모드</label>
+                <label for="wp-mode" style="margin: 0; color: #10b981; font-weight: 800;">워드프레스 구텐베르크 호환
+                    모드</label>
             </div>
-            
-            <button class="btn btn-primary" style="width:100%; margin-top: 1rem;" onclick="insImg()">삽입</button>
+
+            <button class="btn btn-primary" style="width:100%; margin-top: 1rem;"
+                onclick="insImg()">삽입</button>
         </div>
     </div>
 
@@ -656,35 +692,45 @@
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('url')">×</button>
             <h2>링크 삽입</h2>
-            <div class="field"><label>텍스트</label><input type="text" id="url-txt" placeholder="표시할 글자"></div>
-            <div class="field"><label>주소</label><input type="text" id="url-val" placeholder="https://..."></div>
-            <div class="field"><label>링크 타겟</label><select id="url-target">
+            <div class="field">
+                <label>텍스트</label>
+                <input type="text" id="url-txt" placeholder="표시할 글자">
+            </div>
+            <div class="field">
+                <label>주소</label>
+                <input type="text" id="url-val" placeholder="https://...">
+            </div>
+            <div class="field">
+                <label>링크 타겟</label>
+                <select id="url-target">
                     <option value="_self">현재 창 (_self)</option>
                     <option value="_blank">새 창 (_blank)</option>
-                </select></div>
+                </select>
+            </div>
             <div style="display:flex; gap:10px;">
-                <button class="btn btn-secondary" style="flex:1;" onclick="closeModal('url')">취소</button>
+                <button class="btn btn-secondary" style="flex:1;"
+                    onclick="closeModal('url')">취소</button>
                 <button class="btn btn-primary" style="flex:1;" onclick="insURL()">삽입</button>
             </div>
         </div>
     </div>
 
-    <!-- CTA 버튼 모달 (반짝이는 버튼 생성기) -->
+    <!-- CTA 버튼 모달 -->
     <div class="modal" id="modal-cta">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('cta')">×</button>
             <h2>✨ 반짝이는 버튼 생성기</h2>
-            
+
             <div class="field">
                 <label>버튼 텍스트</label>
                 <input type="text" id="cta-txt" value="버튼 클릭하기 👉">
             </div>
-            
+
             <div class="field">
                 <label>링크 URL</label>
                 <input type="url" id="cta-url" placeholder="https://example.com">
             </div>
-            
+
             <div class="field">
                 <label>링크 타겟</label>
                 <select id="cta-target">
@@ -692,31 +738,43 @@
                     <option value="_self">현재 창 (_self)</option>
                 </select>
             </div>
-            
+
             <div class="field">
                 <label>배경 색상</label>
                 <input type="text" id="cta-bg-color" value="#00FFEF" placeholder="#00FFEF" maxlength="7">
-                <div style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 8px;">
-                    <div class="color-dot" data-color="#FF00FF" style="background: #FF00FF;" title="마젠타"></div>
-                    <div class="color-dot" data-color="#00FFEF" style="background: #00FFEF;" title="틱톡 블루"></div>
-                    <div class="color-dot" data-color="#FFF700" style="background: #FFF700;" title="네온 옐로우"></div>
-                    <div class="color-dot" data-color="#39FF14" style="background: #39FF14;" title="네온 그린"></div>
-                    <div class="color-dot" data-color="#FF3CAC" style="background: #FF3CAC;" title="핑크"></div>
-                    <div class="color-dot" data-color="#FF7F50" style="background: #FF7F50;" title="코랄"></div>
+                <div
+                    style="display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; margin-top: 8px;">
+                    <div class="color-dot" data-color="#FF00FF" style="background: #FF00FF;"
+                        title="마젠타"></div>
+                    <div class="color-dot" data-color="#00FFEF" style="background: #00FFEF;"
+                        title="틱톡 블루"></div>
+                    <div class="color-dot" data-color="#FFF700" style="background: #FFF700;"
+                        title="네온 옐로우"></div>
+                    <div class="color-dot" data-color="#39FF14" style="background: #39FF14;"
+                        title="네온 그린"></div>
+                    <div class="color-dot" data-color="#FF3CAC" style="background: #FF3CAC;"
+                        title="핑크"></div>
+                    <div class="color-dot" data-color="#FF7F50" style="background: #FF7F50;"
+                        title="코랄"></div>
                 </div>
             </div>
-            
+
             <div class="field">
                 <label>텍스트 색상</label>
                 <input type="text" id="cta-text-color" value="#000000" placeholder="#000000" maxlength="7">
-                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;">
-                    <div class="color-dot" data-color="#000000" style="background: #000000;" title="검정"></div>
-                    <div class="color-dot" data-color="#FFFFFF" style="background: #FFFFFF; border: 1px solid #ccc;" title="흰색"></div>
-                    <div class="color-dot" data-color="#333333" style="background: #333333;" title="다크 그레이"></div>
-                    <div class="color-dot" data-color="#666666" style="background: #666666;" title="그레이"></div>
+                <div
+                    style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-top: 8px;">
+                    <div class="color-dot" data-color="#000000" style="background: #000000;"
+                        title="검정"></div>
+                    <div class="color-dot" data-color="#FFFFFF"
+                        style="background: #FFFFFF; border: 1px solid #ccc;" title="흰색"></div>
+                    <div class="color-dot" data-color="#333333" style="background: #333333;"
+                        title="다크 그레이"></div>
+                    <div class="color-dot" data-color="#666666" style="background: #666666;"
+                        title="그레이"></div>
                 </div>
             </div>
-            
+
             <div class="field">
                 <label>버튼 너비</label>
                 <select id="cta-width">
@@ -725,39 +783,44 @@
                     <option value="300px">고정 (300px)</option>
                 </select>
             </div>
-            
+
             <div class="field">
                 <label>폰트 크기</label>
                 <input type="range" id="cta-font-size" min="14" max="28" value="20">
-                <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+                <div
+                    style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
                     <span>작게</span>
                     <span id="cta-font-size-value">20px</span>
                     <span>크게</span>
                 </div>
             </div>
-            
+
             <div class="field">
                 <label>버튼 스타일</label>
                 <div style="display: flex; flex-direction: column; gap: 8px;">
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="cta-shiny" checked>
                         <span>✨ 반짝이는 효과</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="cta-float" checked>
                         <span>🎈 떠다니는 애니메이션</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="cta-shadow" checked>
                         <span>🌟 그림자 효과</span>
                     </label>
-                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                    <label
+                        style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
                         <input type="checkbox" id="cta-gradient">
                         <span>🌈 그라데이션 배경</span>
                     </label>
                 </div>
             </div>
-            
+
             <div class="field">
                 <label>호버 효과</label>
                 <select id="cta-hover">
@@ -766,28 +829,33 @@
                     <option value="pulse">펄스</option>
                 </select>
             </div>
-            
-            <div style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 12px; padding: 20px; margin: 15px 0; display: flex; justify-content: center; align-items: center; min-height: 80px;">
+
+            <div
+                style="background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%); border-radius: 12px; padding: 20px; margin: 15px 0; display: flex; justify-content: center; align-items: center; min-height: 80px;">
                 <div id="cta-preview" style="display: inline-flex;"></div>
             </div>
-            
+
             <button class="btn btn-primary" style="width:100%;" onclick="insCTA()">삽입</button>
         </div>
     </div>
 
-    <!-- 기타 모달들 -->
+    <!-- 줄바꿈 모달 -->
     <div class="modal" id="modal-br">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('br')">×</button>
             <h2>줄바꿈</h2>
-            <div class="field"><label>개수</label><select id="br-cnt">
+            <div class="field">
+                <label>개수</label>
+                <select id="br-cnt">
                     <option value="2">2줄</option>
                     <option value="1">1줄</option>
-                </select></div>
+                </select>
+            </div>
             <button class="btn btn-primary" style="width:100%;" onclick="insBR()">삽입</button>
         </div>
     </div>
 
+    <!-- 테이블 모달 -->
     <div class="modal" id="modal-tbl">
         <div class="modal-card">
             <button class="modal-close" onclick="closeModal('tbl')">×</button>
@@ -796,14 +864,20 @@
                 <input type="number" id="tbl-r" value="3" placeholder="행">
                 <input type="number" id="tbl-c" value="2" placeholder="열">
             </div>
-            <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="insTbl()">삽입</button>
+            <button class="btn btn-primary" style="width:100%; margin-top:1rem;"
+                onclick="insTbl()">삽입</button>
         </div>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
+    <!-- CodeMirror -->
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/addon/search/searchcursor.min.js"></script>
 
     <script>
         const THEMES = [
@@ -983,6 +1057,27 @@
                         margin-bottom: 35px;
                         border: 1px solid #ddd;
                     }
+                    /* 메타디스크립션 박스: 테마 색과 연동 */
+                    .meta-desc-box {
+                        background: ${t.m};
+                        border-left: 4px solid ${t.h2};
+                        padding: 18px 20px;
+                        margin: 20px 0 30px 0;
+                        border-radius: 10px;
+                        font-size: 14px;
+                        color: #374151;
+                    }
+                    .meta-desc-title {
+                        font-weight: 700;
+                        font-size: 13px;
+                        letter-spacing: 0.05em;
+                        text-transform: uppercase;
+                        color: ${t.h3};
+                        margin-bottom: 6px;
+                    }
+                    .meta-desc-text {
+                        margin: 0;
+                    }
                     .cta-btn {
                         display: inline-flex;
                         align-items: center;
@@ -1005,7 +1100,7 @@
                         filter: brightness(1.1);
                     }
                     ${state.dark
-                        ? "body{background:#1e1e1e;color:#ddd;}.meta-box{background:#2a2a2a;border-color:#444;}"
+                        ? "body{background:#1e1e1e;color:#ddd;}.meta-box{background:#2a2a2a;border-color:#444;}.meta-desc-box{background:#111827;color:#e5e7eb;border-color:" + t.h3 + ";}"
                         : ''}
                     .wp-block-image {
                         margin: 0;
@@ -1030,32 +1125,7 @@
                             }
                         });
                     <\/script>
-                
-    <script>
-        // ResizeObserver 에러 완전 억제 (메인 창)
-        window.addEventListener('error', (e) => {
-            if (e.message && (
-                e.message.includes('ResizeObserver') ||
-                e.message.includes('resize observer')
-            )) {
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            }
-        }, true);
-
-        // 콘솔 에러도 억제
-        const originalError = console.error;
-        console.error = function(...args) {
-            const msg = args[0]?.toString() || '';
-            if (msg.includes('ResizeObserver')) {
-                return;
-            }
-            originalError.apply(console, args);
-        };
-    </script>
-</body>
+                </body>
             `);
             doc.close();
 
@@ -1175,12 +1245,12 @@
             closeModal('h');
         }
 
-        // ============ 이미지 삽입 (링크 + 크기 조절) ============
+        /* 이미지 모달 관련 */
         function toggleImgLinkField() {
             const imgType = document.getElementById('img-type').value;
             const linkField = document.getElementById('img-link-field');
             const targetField = document.getElementById('img-link-target-field');
-            
+
             if (imgType === 'linked') {
                 linkField.style.display = 'block';
                 targetField.style.display = 'block';
@@ -1195,7 +1265,7 @@
             const sliderField = document.getElementById('img-size-slider-field');
             const slider = document.getElementById('img-size-slider');
             const valueDisplay = document.getElementById('img-size-value');
-            
+
             if (preset === 'custom') {
                 sliderField.style.display = 'block';
             } else {
@@ -1208,8 +1278,8 @@
         function setupImgModal() {
             const imgSizeSlider = document.getElementById('img-size-slider');
             const imgSizeValue = document.getElementById('img-size-value');
-            
-            imgSizeSlider.addEventListener('input', function() {
+
+            imgSizeSlider.addEventListener('input', function () {
                 imgSizeValue.textContent = this.value + '%';
             });
         }
@@ -1223,21 +1293,18 @@
             const linkTarget = document.getElementById('img-link-target').value;
             const sizePreset = document.getElementById('img-size-preset').value;
             const sizeSlider = document.getElementById('img-size-slider').value;
-            
-            // 크기 결정
+
             let imgWidth = sizePreset === 'custom' ? sizeSlider : sizePreset;
-            
+
             let html = "";
             let imgTag = "";
-            
-            // 이미지 태그 생성
+
             if (isWP) {
                 imgTag = `<img src="${url}" alt="${alt}" class="wp-image-0" style="width: ${imgWidth}%; height: auto; border-radius: 12px;"/>`;
             } else {
                 imgTag = `<img src="${url}" alt="${alt}" style="width: ${imgWidth}%; height: auto;">`;
             }
-            
-            // 링크 여부에 따라 처리
+
             if (imgType === 'linked' && linkUrl) {
                 if (isWP) {
                     html = `<figure class="wp-block-image size-full"><a href="${linkUrl}" target="${linkTarget}">${imgTag}</a></figure>`;
@@ -1251,51 +1318,52 @@
                     html = imgTag;
                 }
             }
-            
+
             insAt(html);
             closeModal('img');
         }
 
-        // ============ CTA 반짝이는 버튼 ============
+        /* CTA 버튼 생성 관련 */
         function adjustBrightness(hex, percent) {
             const num = parseInt(hex.replace("#", ""), 16);
             const amt = Math.round(2.55 * percent);
             const R = (num >> 16) + amt;
             const G = (num >> 8 & 0x00FF) + amt;
             const B = (num & 0x0000FF) + amt;
-            return "#" + (0x1000000 + (R < 255 ? R < 1 ? 0 : R : 255) * 0x10000 +
-                (G < 255 ? G < 1 ? 0 : G : 255) * 0x100 +
-                (B < 255 ? B < 1 ? 0 : B : 255)).toString(16).slice(1);
+            return "#" + (0x1000000 +
+                (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+                (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+                (B < 255 ? (B < 1 ? 0 : B) : 255))
+                .toString(16).slice(1);
         }
 
         function setupCTAModal() {
-            // 컬러 도트 이벤트
             document.querySelectorAll('#modal-cta .color-dot').forEach(dot => {
-                dot.addEventListener('click', function() {
+                dot.addEventListener('click', function () {
                     const color = this.getAttribute('data-color');
                     const targetId = this.parentElement.previousElementSibling.id;
                     document.getElementById(targetId).value = color;
                     updateCTAPreview();
                 });
             });
-            
-            // 폰트 크기 슬라이더
-            document.getElementById('cta-font-size').addEventListener('input', function() {
+
+            document.getElementById('cta-font-size').addEventListener('input', function () {
                 document.getElementById('cta-font-size-value').textContent = this.value + 'px';
                 updateCTAPreview();
             });
-            
-            // 모든 입력 이벤트
-            ['cta-txt', 'cta-url', 'cta-target', 'cta-bg-color', 'cta-text-color', 'cta-width', 
-             'cta-font-size', 'cta-shiny', 'cta-float', 'cta-shadow', 'cta-gradient', 'cta-hover'].forEach(id => {
+
+            [
+                'cta-txt', 'cta-url', 'cta-target', 'cta-bg-color', 'cta-text-color',
+                'cta-width', 'cta-font-size', 'cta-shiny', 'cta-float', 'cta-shadow',
+                'cta-gradient', 'cta-hover'
+            ].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) {
                     el.addEventListener('input', updateCTAPreview);
                     el.addEventListener('change', updateCTAPreview);
                 }
             });
-            
-            // 초기 프리뷰
+
             updateCTAPreview();
         }
 
@@ -1309,18 +1377,18 @@
             const float = document.getElementById('cta-float').checked;
             const shadow = document.getElementById('cta-shadow').checked;
             const gradient = document.getElementById('cta-gradient').checked;
-            
+
             const preview = document.getElementById('cta-preview');
-            
+
             let bg = bgColor;
             if (gradient) {
                 bg = `linear-gradient(135deg, ${bgColor}, ${adjustBrightness(bgColor, 20)})`;
             }
-            
+
             let animations = [];
             if (shiny) animations.push('shiny 3s infinite linear');
             if (float) animations.push('float 2s infinite ease-in-out');
-            
+
             let style = `
                 color: ${textColor};
                 font-size: ${fontSize}px;
@@ -1338,15 +1406,15 @@
                 transition: all 0.3s ease;
                 border: none;
             `;
-            
+
             if (animations.length > 0) {
                 style += `animation: ${animations.join(', ')};`;
             }
-            
+
             if (shadow) {
                 style += 'box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);';
             }
-            
+
             if (shiny) {
                 style += `
                     background-image: linear-gradient(135deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.3) 50%, rgba(255,255,255,0) 100%);
@@ -1354,7 +1422,7 @@
                     background-position: -100% 0;
                 `;
             }
-            
+
             preview.innerHTML = `<a href="#" style="${style}" onclick="return false;">${txt}</a>`;
         }
 
@@ -1371,25 +1439,25 @@
             const shadow = document.getElementById('cta-shadow').checked;
             const gradient = document.getElementById('cta-gradient').checked;
             const hover = document.getElementById('cta-hover').value;
-            
+
             const uniqueClass = 'wp-button-' + Math.random().toString(36).substr(2, 9);
-            
+
             let bg = bgColor;
             if (gradient) {
                 bg = `linear-gradient(135deg, ${bgColor}, ${adjustBrightness(bgColor, 20)})`;
             }
-            
+
             let animations = [];
             if (shiny) animations.push('shiny 3s infinite linear');
             if (float) animations.push('float 2s infinite ease-in-out');
-            
+
             let hoverStyle = '';
-            switch(hover) {
+            switch (hover) {
                 case 'opacity': hoverStyle = 'opacity: 0.8 !important;'; break;
                 case 'scale': hoverStyle = 'transform: scale(1.05) !important;'; break;
                 case 'pulse': hoverStyle = 'animation: pulse 0.6s ease-in-out !important;'; break;
             }
-            
+
             let animationCSS = '';
             if (shiny) {
                 animationCSS += '@keyframes shiny { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }\n';
@@ -1400,7 +1468,7 @@
             if (hover === 'pulse') {
                 animationCSS += '@keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }\n';
             }
-            
+
             const code = `<!-- 워드프레스 구텐베르크 HTML 블록 호환 버튼 -->
 <div class="wp-button-container">
   <a href="${url}" target="${target}" class="${uniqueClass}">
@@ -1408,7 +1476,6 @@
   </a>
 </div>
 <style>
-/* 워드프레스 호환 버튼 스타일 */
 .wp-button-container {
   display: flex !important;
   justify-content: center !important;
@@ -1446,7 +1513,6 @@
   outline-offset: 2px !important;
 }
 ${animationCSS}
-/* 워드프레스 반응형 */
 @media (max-width: 768px) {
   .${uniqueClass} {
     width: 90% !important;
@@ -1454,18 +1520,16 @@ ${animationCSS}
     padding: 10px 16px !important;
   }
 }
-/* 워드프레스 테마 호환성 */
 .wp-block-html .${uniqueClass} {
   color: ${textColor} !important;
   background: ${bg} !important;
 }
 </style>`;
-            
+
             insAt(code);
             closeModal('cta');
         }
 
-        // ============ 기타 함수들 ============
         function insBR() {
             const count = document.getElementById('br-cnt').value;
             insAt('<br>'.repeat(count));
@@ -1510,7 +1574,7 @@ ${animationCSS}
         function insertFairTrade() {
             insAt(
                 '<p style="color: #888; font-size: 13px; text-align: center; margin-top: 50px;">' +
-                '파트너스 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.' +
+                '쿠팡 파트너스 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.' +
                 '</p>'
             );
         }
@@ -1664,51 +1728,35 @@ ${animationCSS}
 
         function getDefault() {
             return `<div style="max-width: 800px; margin: 0 auto; line-height: 1.8; color: #333;">
-<div class="meta-box">
-<strong>블로그 HTML 에디터</strong>에 오신 것을 환영합니다!
-</div>
+  <div class="meta-desc-box">
+    <div class="meta-desc-title">META DESCRIPTION</div>
+    <p class="meta-desc-text">
+      이 영역은 검색 결과에 노출되는 메타디스크립션 예시입니다. 핵심 키워드를 자연스럽게 포함해 2~3문장으로 요약해 주세요.
+    </p>
+  </div>
 
-<h2>에디터 사용법</h2>
-<p>상단 툴바에서 다양한 기능을 사용할 수 있습니다.</p>
+  <h2>에디터 사용법</h2>
+  <p>상단 툴바에서 다양한 기능을 사용할 수 있습니다.</p>
 
-<h3>주요 기능</h3>
-<ul>
-<li>🌈 20가지 테마</li>
-<li>🖼️ 이미지 삽입</li>
-<li>✨ 반짝이는 버튼</li>
-</ul>
+  <h3>주요 기능</h3>
+  <ul>
+    <li>🌈 20가지 테마</li>
+    <li>🖼️ 이미지 삽입 (링크 + 크기 조절)</li>
+    <li>✨ 반짝이는 버튼 생성기</li>
+    <li>📑 자동 목차 생성</li>
+    <li>📝 메타디스크립션 박스</li>
+  </ul>
 
-<h2>시작하기</h2>
-<p>이제 작성해보세요!</p>
+  <div style="text-align:center; margin:34px 0;">
+    <a href="https://www.coupang.com" class="cta-btn">🛒 버튼 예시</a>
+  </div>
+
+  <h2>시작하기</h2>
+  <p>이제 이 내용을 지우고 자유롭게 작성해보세요!</p>
 </div>`;
         }
 
         init();
-    </script>
-
-    <script>
-        // ResizeObserver 에러 완전 억제 (메인 창)
-        window.addEventListener('error', (e) => {
-            if (e.message && (
-                e.message.includes('ResizeObserver') ||
-                e.message.includes('resize observer')
-            )) {
-                e.stopImmediatePropagation();
-                e.stopPropagation();
-                e.preventDefault();
-                return false;
-            }
-        }, true);
-
-        // 콘솔 에러도 억제
-        const originalError = console.error;
-        console.error = function(...args) {
-            const msg = args[0]?.toString() || '';
-            if (msg.includes('ResizeObserver')) {
-                return;
-            }
-            originalError.apply(console, args);
-        };
     </script>
 </body>
 
