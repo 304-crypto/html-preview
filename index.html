@@ -988,7 +988,7 @@ function createEditor() {
 
     function init() {
       createEditor();
-      const saved = localStorage.getItem('c');
+      const saved = localStorage.getItem('bhe_content');
       editor.setValue((saved && saved.trim().length>0) ? saved : getDefault());
       apply();
       renderThemes();
@@ -1000,7 +1000,7 @@ function createEditor() {
         clearTimeout(this.tid);
         this.tid = setTimeout(() => {
           render();
-          localStorage.setItem('c', editor.getValue());
+          localStorage.setItem('bhe_content', editor.getValue());
         }, 400);
       });
 
@@ -1903,14 +1903,14 @@ const html = `
     }
 
     function saveToLocal() {
-      localStorage.setItem('c', editor.getValue());
+      localStorage.setItem('bhe_content', editor.getValue());
       toast('Saved!');
     }
 
     function resetEditor() {
       if (!confirm('리셋하시겠습니까? (작성 중인 내용이 초기화됩니다)')) return;
 
-      localStorage.removeItem('c');
+      localStorage.removeItem('bhe_content');
       editor.setValue(getDefault());
       render();
     }
