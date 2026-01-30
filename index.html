@@ -240,6 +240,10 @@
       <h1>🎨 Blog HTML Editor <span style="font-size:.78rem;opacity:.8;">PRO MASTER (Offline-safe)</span></h1>
       <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
         <span class="hint-badge" id="engine-badge">에디터 엔진: 확인중...</span>
+
+        <!-- ✅ 추가: 테마 강제 적용 토글(인라인 스타일 무시) -->
+        <button class="btn btn-secondary" id="force-theme-btn" onclick="toggleForceTheme()">🎨 테마강제: OFF</button>
+
         <button class="btn btn-secondary btn-icon" id="dark-toggle" onclick="toggleDarkMode()">☀️</button>
         <div class="separator"></div>
         <button class="btn btn-primary" onclick="copyHTML()">📋 전체 복사</button>
@@ -473,7 +477,10 @@
       scale: parseFloat(localStorage.getItem('s') || '1'),
       dark: localStorage.getItem('d') === 'true',
       v: localStorage.getItem('v') || '100',
-      t: parseInt(localStorage.getItem('t') || '0', 10)
+      t: parseInt(localStorage.getItem('t') || '0', 10),
+
+      // ✅ 추가: 테마 강제 적용(인라인 스타일 무시)
+      forceTheme: localStorage.getItem('forceTheme') === 'true'
     };
 
     // Editor engine
@@ -487,6 +494,21 @@
       badge.textContent = editorEngine === 'codemirror' ? '에디터 엔진: CodeMirror' : '에디터 엔진: 내장(폴백)';
     }
 
+    function setForceThemeBtn(){
+      const b = document.getElementById('force-theme-btn');
+      b.textContent = state.forceTheme ? '🎨 테마강제: ON' : '🎨 테마강제: OFF';
+      b.style.background = state.forceTheme ? 'rgba(99,102,241,.22)' : '';
+      b.style.border = state.forceTheme ? '1px solid rgba(99,102,241,.65)' : '';
+    }
+
+    function toggleForceTheme(){
+      state.forceTheme = !state.forceTheme;
+      localStorage.setItem('forceTheme', String(state.forceTheme));
+      setForceThemeBtn();
+      render();
+      toast(state.forceTheme ? '테마강제 ON' : '테마강제 OFF');
+    }
+
     function getValue(){
       return editorEngine === 'codemirror' ? cm.getValue() : plain.value;
     }
@@ -494,14 +516,9 @@
       if(editorEngine === 'codemirror') cm.setValue(v);
       else plain.value = v;
     }
-    function focusEditor(){
-      if(editorEngine === 'codemirror') cm.focus();
-      else plain.focus();
-    }
 
     function initEditor(){
       const defaultContent = localStorage.getItem('c') || getDefault();
-      // CodeMirror가 존재하고(스크립트 로드 성공) 정상 생성 가능하면 사용
       if(window.CodeMirror){
         try{
           cm = CodeMirror.fromTextArea(cmTextarea, {
@@ -522,18 +539,15 @@
           }, 350));
           setTimeout(()=>cm.refresh(), 0);
         }catch(e){
-          // 생성 중 오류가 나면 폴백
           editorEngine = 'plain';
         }
       }
 
       if(editorEngine === 'plain'){
-        // 폴백 textarea 표시
         cmTextarea.style.display = 'none';
         plain.style.display = 'block';
         plain.value = defaultContent;
 
-        // 탭 입력(들여쓰기) 지원
         plain.addEventListener('keydown', (e) => {
           if(e.key === 'Tab'){
             e.preventDefault();
@@ -569,10 +583,11 @@
       document.body.classList.toggle('dark-mode', state.dark);
       document.getElementById('dark-toggle').textContent = state.dark ? '☀️' : '🌙';
 
+      setForceThemeBtn();
+
       document.getElementById('font-size-val').textContent = state.font + 'px';
       document.getElementById('scale-val').textContent = Math.round(state.scale * 100) + '%';
 
-      // editor font size
       if(editorEngine === 'codemirror' && cm){
         document.querySelector('.CodeMirror').style.fontSize = state.font + 'px';
         cm.setOption('theme', state.dark ? 'monokai' : 'default');
@@ -639,6 +654,17 @@
       const doc = frame.contentDocument;
       const code = getValue();
       const t = THEMES[state.t] || THEMES[0];
+
+      // ✅ 핵심: 인라인 스타일이 있어도 테마가 먹게 만드는 오버라이드(토글)
+      const forceCSS = state.forceTheme ? `
+        .wrap h2{ color:${t.h2} !important; border-bottom-color:${t.h2} !important; }
+        .wrap h3{ color:${t.h3} !important; border-left-color:${t.h3} !important; }
+        .wrap a{ color:${t.h2} !important; }
+
+        /* (선택) 목차/박스에서 인라인 background-color가 너무 고정이면 아래 2줄을 켜도 됨 */
+        /* .wrap [style*="background-color"]{ background-color:${t.m} !important; } */
+        /* .wrap [style*="border-bottom"]{ border-bottom-color:${t.h2} !important; } */
+      ` : '';
 
       const css = `
       <style>
@@ -717,17 +743,19 @@
           margin: 20px auto;
         }
         .cta-btn:hover{ transform: translateY(-4px); filter: brightness(1.05); }
+
         ${state.dark ? `
           body{ color:#e5e7eb; }
           .meta-box, .meta-desc-box{ background:#111827; color:#e5e7eb; border-color: rgba(255,255,255,.12); }
         ` : ''}
+
+        ${forceCSS}
       </style>`;
 
       doc.open();
       doc.write(`${css}<body><div class="wrap">${code}</div></body>`);
       doc.close();
 
-      // iframe 높이 동기화
       const syncHeight = () => {
         const h = doc.documentElement.scrollHeight;
         frame.style.height = h + 'px';
@@ -779,7 +807,6 @@
       location.reload();
     }
 
-    // Undo/Redo: CodeMirror면 호출, 폴백이면 브라우저 기본(키보드 Ctrl+Z/Y 권장)
     function tryUndo(){
       if(editorEngine === 'codemirror' && cm) cm.undo();
       else toast('폴백 에디터: Ctrl+Z 사용');
@@ -923,7 +950,6 @@
       });
       toc += '</div>';
 
-      // id 삽입은 원본 코드에서 단순 치환(100% 완벽하진 않음)
       let content = getValue();
       headings.forEach((h,i)=>{
         const tag = `<${h.tagName.toLowerCase()}`;
@@ -969,12 +995,12 @@
     <p style="margin:0;">이 영역은 메타디스크립션 예시입니다. 핵심 키워드를 자연스럽게 2~3문장으로 요약해 주세요.</p>
   </div>
 
-  <h2>에디터 사용법</h2>
+  <h2 style="color:#2c3e50; border-bottom:3px solid #E8F5E9;">에디터 사용법(인라인 예시)</h2>
   <p>상단 툴바에서 다양한 기능을 사용할 수 있습니다.</p>
 
-  <h3>주요 기능</h3>
+  <h3 style="color:#2E7D32;">주요 기능</h3>
   <ul>
-    <li>🌈 테마 갤러리(테마 색 즉시 반영)</li>
+    <li>🌈 테마 갤러리</li>
     <li>🖼️ 이미지 삽입</li>
     <li>✨ 버튼 생성</li>
     <li>📑 자동 목차</li>
@@ -995,7 +1021,6 @@
       renderThemes();
       setupResizer();
       apply();
-      // 초기 렌더
       render();
     }
     boot();
