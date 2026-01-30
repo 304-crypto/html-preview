@@ -1,1029 +1,611 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>블로그 HTML 에디터 Pro Master (Offline-safe)</title>
-
-  <!-- (선택) CodeMirror CDN: 로드 실패해도 앱이 죽지 않도록 폴백 처리함 -->
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.css">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/theme/monokai.min.css">
-
-  <style>
-    :root{
-      --primary:#6366f1;
-      --primary-glow: rgba(99,102,241,.35);
-      --bg-dark:#0f172a;
-      --bg-darker:#020617;
-      --bg-light:#1e293b;
-      --text-primary:#f1f5f9;
-      --text-secondary:#cbd5e1;
-      --border:#334155;
-      --transition: all .25s cubic-bezier(.4,0,.2,1);
-    }
-    body.dark-mode{
-      --bg-dark:#000;
-      --bg-darker:#111;
-      --bg-light:#222;
-      --border:#444;
-    }
-    body{
-      font-family: system-ui, -apple-system, "Segoe UI", "Malgun Gothic", sans-serif;
-      background: linear-gradient(135deg, var(--bg-dark), var(--bg-darker));
-      color: var(--text-primary);
-      height:100vh; margin:0; overflow:hidden;
-      display:flex; flex-direction:column;
-    }
-
-    /* Header */
-    .header{
-      background: rgba(15,23,42,.9);
-      backdrop-filter: blur(12px);
-      border-bottom: 2px solid var(--primary);
-      padding: .65rem 1.1rem;
-      box-shadow: 0 6px 28px rgba(0,0,0,.25);
-      z-index:10;
-    }
-    .header-top{display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:.55rem;}
-    .header h1{
-      margin:0;
-      font-size:1.05rem; font-weight:900; letter-spacing:-.4px;
-      background: linear-gradient(135deg, #818cf8, #c084fc, #f472b6);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-      background-clip:text;
-    }
-
-    .btn{
-      padding:.42rem .78rem;
-      border:none; border-radius:10px;
-      font-size:.8rem; font-weight:800;
-      cursor:pointer; transition: var(--transition);
-      display:inline-flex; align-items:center; justify-content:center;
-      gap:.35rem;
-      user-select:none;
-    }
-    .btn:hover:not(:disabled){
-      transform: translateY(-1px);
-      filter: brightness(1.05);
-      box-shadow: 0 8px 18px rgba(0,0,0,.2);
-    }
-    .btn-primary{ background: var(--primary); color:#fff; }
-    .btn-success{ background:#10b981; color:#fff; }
-    .btn-danger{ background:#ef4444; color:#fff; }
-    .btn-secondary{ background: var(--bg-light); color: var(--text-primary); border:1px solid var(--border); }
-    .btn-icon{ padding:.42rem; min-width:36px; font-size:1.05rem; }
-
-    .toolbar{display:flex; align-items:center; flex-wrap:wrap; gap:8px;}
-    .toolbar-group{
-      display:flex; gap:2px; padding:2px;
-      border-radius:12px;
-      background: rgba(255,255,255,.06);
-    }
-    .separator{ width:1.5px; height:18px; background: var(--border); margin:0 .25rem; }
-
-    /* Workspace */
-    .workspace{ flex:1; display:flex; overflow:hidden; position:relative; }
-    .pane{ display:flex; flex-direction:column; overflow:hidden; }
-    .pane-header{
-      background: var(--bg-darker);
-      border-bottom:1px solid var(--border);
-      padding:.45rem 1rem;
-      display:flex; justify-content:space-between; align-items:center;
-      font-size:.7rem; font-weight:900; letter-spacing:.08em;
-      text-transform:uppercase; color: var(--text-secondary);
-    }
-    .zoom-box{
-      display:flex; align-items:center; gap:.35rem;
-      background: rgba(0,0,0,.3);
-      border:1px solid rgba(255,255,255,.08);
-      padding:2px 8px; border-radius:10px;
-    }
-    .zoom-val{ min-width:44px; text-align:center; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:.75rem; color:#e5e7eb; }
-
-    #editor-pane{ width:50%; border-right:2px solid var(--border); }
-    #preview-pane{ width:50%; background:#f8fafc; color:#111; }
-
-    /* Fallback textarea editor */
-    #plain-editor{
-      width:100%; height:100%;
-      border:0; outline:none;
-      resize:none;
-      padding:14px;
-      font-size:14px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      line-height:1.55;
-      background:#ffffff; color:#111;
-    }
-    body.dark-mode #plain-editor{
-      background:#0d1117; color:#c9d1d9;
-    }
-
-    /* CodeMirror height */
-    .CodeMirror{ height:100% !important; font-size:14px; font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; }
-
-    /* Preview */
-    .preview-content{ flex:1; overflow:auto; padding:2.2rem; background:#f1f5f9; }
-    .preview-viewport{
-      background:#fff;
-      transform-origin: top center;
-      transition: transform .25s;
-      box-shadow: 0 20px 55px rgba(0,0,0,.14);
-      border-radius:6px;
-      overflow:hidden;
-      position:relative;
-      min-height:100%;
-    }
-    iframe#preview-frame{ width:100%; height:100%; border:none; display:block; }
-
-    #resizer{ width:6px; background: var(--border); cursor: col-resize; z-index:5; transition:.15s; }
-    #resizer:hover{ background: var(--primary); }
-
-    /* Modal */
-    .modal{
-      display:none;
-      position:fixed; inset:0;
-      background: rgba(0,0,0,.85);
-      backdrop-filter: blur(10px);
-      z-index:2000;
-      justify-content:center; align-items:center;
-    }
-    .modal.active{ display:flex; }
-    .modal-card{
-      background: var(--bg-dark);
-      border:1px solid var(--border);
-      border-radius:20px;
-      width:min(92vw, 720px);
-      max-height:90vh;
-      overflow:auto;
-      padding:2.2rem;
-      box-shadow: 0 32px 80px rgba(0,0,0,.6);
-      position:relative;
-    }
-    .modal-close{
-      position:absolute; top:1.2rem; right:1.2rem;
-      border:none; background:none;
-      color: var(--text-secondary);
-      font-size:1.6rem; cursor:pointer;
-      transition: var(--transition);
-    }
-    .modal-close:hover{ color: var(--primary); transform: scale(1.08); }
-
-    .field{ margin-bottom: 1rem; }
-    .field label{
-      display:block; margin-bottom:.45rem;
-      font-size:.8rem; font-weight:800; color: var(--text-secondary);
-    }
-    .field input, .field select, .field textarea{
-      width:100%;
-      padding:.72rem .78rem;
-      border:2px solid var(--border);
-      border-radius:12px;
-      background: var(--bg-darker);
-      color: var(--text-primary);
-      outline:none;
-    }
-
-    .theme-grid{
-      display:grid;
-      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-      gap:10px;
-      max-height: 420px;
-      overflow:auto;
-      padding:2px;
-    }
-    .theme-card{
-      border:2px solid var(--border);
-      border-radius:14px;
-      background: var(--bg-darker);
-      padding:.85rem;
-      cursor:pointer;
-      transition: var(--transition);
-      text-align:center;
-    }
-    .theme-card.active{ border-color: var(--primary); background: rgba(99,102,241,.12); }
-    .theme-dot{
-      width:100%; height:10px; border-radius:10px;
-      margin-bottom:8px;
-    }
-    .theme-name{ font-weight:900; font-size:.78rem; color: var(--text-primary); }
-
-    #toast{
-      position:fixed;
-      left:50%; bottom:34px;
-      transform: translateX(-50%) translateY(120px);
-      background: var(--primary);
-      color:#fff;
-      padding: 12px 22px;
-      border-radius:999px;
-      font-weight:900;
-      transition: transform .35s;
-      z-index:9999;
-      box-shadow: 0 18px 40px rgba(0,0,0,.35);
-    }
-    #toast.show{ transform: translateX(-50%) translateY(0); }
-
-    .hint-badge{
-      font-size:.72rem;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid rgba(255,255,255,.15);
-      background: rgba(255,255,255,.06);
-      color: var(--text-secondary);
-      font-weight:800;
-    }
-  </style>
-</head>
-
-<body class="light-mode">
-  <header class="header">
-    <div class="header-top">
-      <h1>🎨 Blog HTML Editor <span style="font-size:.78rem;opacity:.8;">PRO MASTER (Offline-safe)</span></h1>
-      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
-        <span class="hint-badge" id="engine-badge">에디터 엔진: 확인중...</span>
-
-        <!-- ✅ 추가: 테마 강제 적용 토글(인라인 스타일 무시) -->
-        <button class="btn btn-secondary" id="force-theme-btn" onclick="toggleForceTheme()">🎨 테마강제: OFF</button>
-
-        <button class="btn btn-secondary btn-icon" id="dark-toggle" onclick="toggleDarkMode()">☀️</button>
-        <div class="separator"></div>
-        <button class="btn btn-primary" onclick="copyHTML()">📋 전체 복사</button>
-        <button class="btn btn-success" onclick="saveToLocal()">💾 저장</button>
-        <button class="btn btn-danger" onclick="resetEditor()">🔄 리셋</button>
-        <button class="btn btn-danger" style="background:#dc2626;" onclick="clearCache()">🧹 캐시삭제</button>
-      </div>
-    </div>
-
-    <div class="toolbar">
-      <div class="toolbar-group">
-        <button class="btn btn-secondary btn-icon" title="Undo" onclick="tryUndo()">⟲</button>
-        <button class="btn btn-secondary btn-icon" title="Redo" onclick="tryRedo()">⟳</button>
-      </div>
-      <div class="separator"></div>
-      <button class="btn btn-primary" onclick="openModal('themes')">🌈 테마 갤러리</button>
-      <button class="btn btn-secondary" onclick="openModal('toc')">📑 자동 목차</button>
-      <div class="separator"></div>
-      <div class="toolbar-group">
-        <button class="btn btn-secondary btn-icon" title="Bold" onclick="wrapSelection('b')"><b>B</b></button>
-        <button class="btn btn-secondary btn-icon" title="Underline" onclick="wrapSelection('u')"><u>U</u></button>
-        <button class="btn btn-secondary btn-icon" title="Highlight" onclick="insHighlight()" style="color:#f1c40f;">🖍️</button>
-      </div>
-      <div class="separator"></div>
-      <div class="toolbar-group">
-        <button class="btn btn-secondary" onclick="openModal('h')">H#</button>
-        <button class="btn btn-secondary" onclick="openModal('img')">🖼️ 이미지</button>
-        <button class="btn btn-secondary" onclick="openModal('cta')">✨ 버튼</button>
-        <button class="btn btn-secondary" onclick="openModal('br')">↩️ BR</button>
-        <button class="btn btn-secondary btn-icon" title="Table" onclick="openModal('tbl')">▦</button>
-      </div>
-    </div>
-  </header>
-
-  <main class="workspace">
-    <section class="pane" id="editor-pane">
-      <div class="pane-header">
-        <span>HTML Code</span>
-        <div class="zoom-box">
-          <button class="btn" style="padding:2px 8px;" onclick="adjustFont(-1)">-</button>
-          <span class="zoom-val" id="font-size-val">14px</span>
-          <button class="btn" style="padding:2px 8px;" onclick="adjustFont(1)">+</button>
-        </div>
-      </div>
-
-      <!-- CodeMirror 자리(로드 성공 시 여기로 교체됨) -->
-      <textarea id="cm-textarea"></textarea>
-
-      <!-- 폴백 textarea (CodeMirror 실패 시 표시) -->
-      <textarea id="plain-editor" style="display:none;"></textarea>
-    </section>
-
-    <div id="resizer"></div>
-
-    <section class="pane" id="preview-pane">
-      <div class="pane-header">
-        <span>Preview</span>
-        <div style="display:flex; gap:10px; align-items:center;">
-          <div class="zoom-box">
-            <button class="btn" style="padding:2px 8px;" onclick="adjustScale(-0.1)">-</button>
-            <span class="zoom-val" id="scale-val">100%</span>
-            <button class="btn" style="padding:2px 8px;" onclick="adjustScale(0.1)">+</button>
-          </div>
-
-          <div class="toolbar-group">
-            <button class="btn btn-secondary btn-icon view-opt active" id="view-100" onclick="setVWidth('100%','100')">🖥️</button>
-            <button class="btn btn-secondary btn-icon view-opt" id="view-768" onclick="setVWidth('768px','768')">📱</button>
-            <button class="btn btn-secondary btn-icon view-opt" id="view-375" onclick="setVWidth('375px','375')">🤳</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="preview-content">
-        <div class="preview-viewport" id="viewport">
-          <iframe id="preview-frame"></iframe>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <div id="toast">OK</div>
-
-  <!-- 테마 모달 -->
-  <div class="modal" id="modal-themes">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('themes')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">🌈 테마 갤러리</h2>
-      <div class="theme-grid" id="theme-grid"></div>
-      <div style="margin-top:1.2rem;">
-        <button class="btn btn-secondary" style="width:100%;" onclick="closeModal('themes')">닫기</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- 목차 모달 -->
-  <div class="modal" id="modal-toc">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('toc')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">📑 목차 생성</h2>
-      <div class="field">
-        <label>스타일</label>
-        <select id="toc-style">
-          <option value="box">Modern Box</option>
-          <option value="list">Minimal List</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="width:100%;" onclick="generateTOC()">생성 및 삽입</button>
-    </div>
-  </div>
-
-  <!-- 제목 모달 -->
-  <div class="modal" id="modal-h">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('h')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">제목 삽입</h2>
-      <div class="field">
-        <label>레벨</label>
-        <select id="h-lv">
-          <option value="2">H2</option>
-          <option value="3">H3</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>내용</label>
-        <input type="text" id="h-txt" placeholder="제목을 입력">
-      </div>
-      <button class="btn btn-primary" style="width:100%;" onclick="insH()">삽입</button>
-    </div>
-  </div>
-
-  <!-- 이미지 모달 -->
-  <div class="modal" id="modal-img">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('img')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">이미지 삽입</h2>
-
-      <div class="field">
-        <label>이미지 URL</label>
-        <input type="text" id="img-url" placeholder="https://...">
-      </div>
-      <div class="field">
-        <label>Alt 설명</label>
-        <input type="text" id="img-alt" value="이미지">
-      </div>
-      <div class="field">
-        <label>너비(%)</label>
-        <input type="number" id="img-w" value="100" min="20" max="100">
-      </div>
-
-      <button class="btn btn-primary" style="width:100%;" onclick="insImg()">삽입</button>
-    </div>
-  </div>
-
-  <!-- CTA 모달 -->
-  <div class="modal" id="modal-cta">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('cta')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">✨ 버튼 생성</h2>
-
-      <div class="field">
-        <label>버튼 텍스트</label>
-        <input type="text" id="cta-txt" value="버튼 클릭하기 👉">
-      </div>
-      <div class="field">
-        <label>링크 URL</label>
-        <input type="url" id="cta-url" placeholder="https://example.com">
-      </div>
-      <div class="field">
-        <label>배경색</label>
-        <input type="text" id="cta-bg" value="#6366f1" maxlength="7">
-      </div>
-      <div class="field">
-        <label>글자색</label>
-        <input type="text" id="cta-fg" value="#ffffff" maxlength="7">
-      </div>
-
-      <button class="btn btn-primary" style="width:100%;" onclick="insCTA()">삽입</button>
-    </div>
-  </div>
-
-  <!-- BR 모달 -->
-  <div class="modal" id="modal-br">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('br')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">줄바꿈</h2>
-      <div class="field">
-        <label>개수</label>
-        <select id="br-cnt">
-          <option value="2">2줄</option>
-          <option value="1">1줄</option>
-        </select>
-      </div>
-      <button class="btn btn-primary" style="width:100%;" onclick="insBR()">삽입</button>
-    </div>
-  </div>
-
-  <!-- 테이블 모달 -->
-  <div class="modal" id="modal-tbl">
-    <div class="modal-card">
-      <button class="modal-close" onclick="closeModal('tbl')">×</button>
-      <h2 style="margin:0 0 1.2rem 0; color: var(--primary);">테이블</h2>
-      <div style="display:flex; gap:10px;">
-        <input class="field" type="number" id="tbl-r" value="3" min="1" placeholder="행" style="flex:1;">
-        <input class="field" type="number" id="tbl-c" value="2" min="1" placeholder="열" style="flex:1;">
-      </div>
-      <button class="btn btn-primary" style="width:100%; margin-top:1rem;" onclick="insTbl()">삽입</button>
-    </div>
-  </div>
-
-  <!-- CodeMirror scripts (옵션). 실패해도 폴백로직이 있어서 앱은 정상 동작 -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/codemirror.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/xml/xml.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.2/mode/htmlmixed/htmlmixed.min.js"></script>
-
-  <script>
+<script>
     const THEMES = [
-      { n:'에메랄드', h2:'#2ecc71', h3:'#27ae60', m:'#E8F5E9', c:'linear-gradient(135deg,#10b981,#2ecc71)' },
-      { n:'오션블루', h2:'#3498db', h3:'#2980b9', m:'#e3f2fd', c:'linear-gradient(135deg,#3498db,#2c3e50)' },
-      { n:'선셋로즈', h2:'#e91e63', h3:'#c2185b', m:'#fce4ec', c:'linear-gradient(135deg,#ff4081,#c2185b)' },
-      { n:'로얄퍼플', h2:'#9b59b6', h3:'#8e44ad', m:'#f3e5f5', c:'linear-gradient(135deg,#8e44ad,#34495e)' },
-      { n:'딥오렌지', h2:'#e67e22', h3:'#d35400', m:'#fff3e0', c:'linear-gradient(135deg,#e67e22,#2c3e50)' },
-      { n:'골드체인', h2:'#f1c40f', h3:'#f39c12', m:'#fef9e7', c:'linear-gradient(135deg,#111827,#f59e0b)' },
-      { n:'차콜노아', h2:'#34495e', h3:'#2c3e50', m:'#ebf5fb', c:'linear-gradient(135deg,#64748b,#111827)' },
-      { n:'네온사이버', h2:'#00ffcc', h3:'#00d4aa', m:'#e0fff9', c:'linear-gradient(135deg,#6600ff,#00ffcc)' },
-      { n:'레드와인', h2:'#c0392b', h3:'#96281b', m:'#f9ebea', c:'linear-gradient(135deg,#c0392b,#2c3e50)' },
-      { n:'인디고', h2:'#4834d4', h3:'#686de0', m:'#ededff', c:'linear-gradient(135deg,#4834d4,#686de0)' }
+        { n: '에메랄드', h2: '#2ecc71', h3: '#27ae60', m: '#E8F5E9', c: 'linear-gradient(135deg,#ff6f00,#ff8f00)' },
+        { n: '오션블루', h2: '#3498db', h3: '#2980b9', m: '#e3f2fd', c: 'linear-gradient(135deg,#3498db,#2c3e50)' },
+        { n: '선셋로즈', h2: '#e91e63', h3: '#c2185b', m: '#fce4ec', c: 'linear-gradient(135deg,#ff4081,#c2185b)' },
+        { n: '로얄퍼플', h2: '#9b59b6', h3: '#8e44ad', m: '#f3e5f5', c: 'linear-gradient(135deg,#8e44ad,#34495e)' },
+        { n: '딥오렌지', h2: '#e67e22', h3: '#d35400', m: '#fff3e0', c: 'linear-gradient(135deg,#e67e22,#2c3e50)' },
+        { n: '포레스트', h2: '#16a085', h3: '#118d73', m: '#e8f3f1', c: 'linear-gradient(135deg,#16a085,#2c3e50)' },
+        { n: '골드체인', h2: '#f1c40f', h3: '#f39c12', m: '#fef9e7', c: 'linear-gradient(135deg,#1c1c1c,#f39c12)' },
+        { n: '차콜노아', h2: '#34495e', h3: '#2c3e50', m: '#ebf5fb', c: 'linear-gradient(135deg,#7f8c8d,#2c3e50)' },
+        { n: '네온사이버', h2: '#00ffcc', h3: '#00d4aa', m: '#e0fff9', c: 'linear-gradient(135deg,#6600ff,#00ffcc)' },
+        { n: '체리소다', h2: '#ff4757', h3: '#e84118', m: '#ffecef', c: 'linear-gradient(135deg,#ff4757,#2f3542)' },
+        { n: '라벤더', h2: '#a29bfe', h3: '#6c5ce7', m: '#f0efff', c: 'linear-gradient(135deg,#a29bfe,#6c5ce7)' },
+        { n: '민트프레시', h2: '#55efc4', h3: '#00b894', m: '#e8fdf8', c: 'linear-gradient(135deg,#55efc4,#00b894)' },
+        { n: '스카이', h2: '#0984e3', h3: '#74b9ff', m: '#e1f5ff', c: 'linear-gradient(135deg,#0984e3,#74b9ff)' },
+        { n: '레드와인', h2: '#c0392b', h3: '#96281b', m: '#f9ebea', c: 'linear-gradient(135deg,#c0392b,#2c3e50)' },
+        { n: '슬레이트', h2: '#95a5a6', h3: '#7f8c8d', m: '#f2f4f4', c: 'linear-gradient(135deg,#95a5a6,#2c3e50)' },
+        { n: '라임', h2: '#badc58', h3: '#6ab04c', m: '#f4f9e9', c: 'linear-gradient(135deg,#badc58,#6ab04c)' },
+        { n: '피치핑크', h2: '#ffbe76', h3: '#f0932b', m: '#fff4e6', c: 'linear-gradient(135deg,#ffbe76,#f0932b)' },
+        { n: '베리펀치', h2: '#ff7979', h3: '#eb4d4b', m: '#ffeded', c: 'linear-gradient(135deg,#ff7979,#eb4d4b)' },
+        { n: '인디고', h2: '#4834d4', h3: '#686de0', m: '#ededff', c: 'linear-gradient(135deg,#4834d4,#686de0)' },
+        { n: '시안테일', h2: '#22a6b3', h3: '#7ed6df', m: '#e0faff', c: 'linear-gradient(135deg,#22a6b3,#7ed6df)' }
     ];
 
     let state = {
-      font: parseInt(localStorage.getItem('f') || '14', 10),
-      scale: parseFloat(localStorage.getItem('s') || '1'),
-      dark: localStorage.getItem('d') === 'true',
-      v: localStorage.getItem('v') || '100',
-      t: parseInt(localStorage.getItem('t') || '0', 10),
-
-      // ✅ 추가: 테마 강제 적용(인라인 스타일 무시)
-      forceTheme: localStorage.getItem('forceTheme') === 'true'
+        font: parseInt(localStorage.getItem('f')) || 14,
+        scale: parseFloat(localStorage.getItem('s')) || 1.0,
+        dark: localStorage.getItem('d') === 'true',
+        v: localStorage.getItem('v') || '100',
+        t: parseInt(localStorage.getItem('t')) || 0,
+        jsonld: ''
     };
 
-    // Editor engine
-    let editorEngine = 'plain'; // 'codemirror' or 'plain'
-    let cm = null;
-    const cmTextarea = document.getElementById('cm-textarea');
-    const plain = document.getElementById('plain-editor');
-
-    function setEngineBadge(){
-      const badge = document.getElementById('engine-badge');
-      badge.textContent = editorEngine === 'codemirror' ? '에디터 엔진: CodeMirror' : '에디터 엔진: 내장(폴백)';
-    }
-
-    function setForceThemeBtn(){
-      const b = document.getElementById('force-theme-btn');
-      b.textContent = state.forceTheme ? '🎨 테마강제: ON' : '🎨 테마강제: OFF';
-      b.style.background = state.forceTheme ? 'rgba(99,102,241,.22)' : '';
-      b.style.border = state.forceTheme ? '1px solid rgba(99,102,241,.65)' : '';
-    }
-
-    function toggleForceTheme(){
-      state.forceTheme = !state.forceTheme;
-      localStorage.setItem('forceTheme', String(state.forceTheme));
-      setForceThemeBtn();
-      render();
-      toast(state.forceTheme ? '테마강제 ON' : '테마강제 OFF');
-    }
-
-    function getValue(){
-      return editorEngine === 'codemirror' ? cm.getValue() : plain.value;
-    }
-    function setValue(v){
-      if(editorEngine === 'codemirror') cm.setValue(v);
-      else plain.value = v;
-    }
-
-    function initEditor(){
-      const defaultContent = localStorage.getItem('c') || getDefault();
-      if(window.CodeMirror){
-        try{
-          cm = CodeMirror.fromTextArea(cmTextarea, {
-            mode:'htmlmixed',
-            theme: state.dark ? 'monokai' : 'default',
-            lineNumbers:true,
-            lineWrapping:true,
-            indentUnit:2,
-            tabSize:2,
-            matchBrackets:true,
-            extraKeys: { 'Ctrl-Z':'undo', 'Ctrl-Y':'redo' }
-          });
-          editorEngine = 'codemirror';
-          setValue(defaultContent);
-          cm.on('change', debounce(() => {
-            render();
-            localStorage.setItem('c', getValue());
-          }, 350));
-          setTimeout(()=>cm.refresh(), 0);
-        }catch(e){
-          editorEngine = 'plain';
+    const editor = CodeMirror.fromTextArea(
+        document.getElementById('cm-textarea'),
+        {
+            mode: 'htmlmixed',
+            theme: 'monokai',
+            lineNumbers: true,
+            lineWrapping: true,
+            indentUnit: 2,
+            tabSize: 2,
+            matchBrackets: true,
+            extraKeys: {
+                'Ctrl-Z': 'undo',
+                'Ctrl-Y': 'redo'
+            }
         }
-      }
+    );
 
-      if(editorEngine === 'plain'){
-        cmTextarea.style.display = 'none';
-        plain.style.display = 'block';
-        plain.value = defaultContent;
+    function init() {
+        editor.setValue(localStorage.getItem('c') || getDefault());
+        apply();
+        renderThemes();
+        setupRes();
 
-        plain.addEventListener('keydown', (e) => {
-          if(e.key === 'Tab'){
-            e.preventDefault();
-            const start = plain.selectionStart;
-            const end = plain.selectionEnd;
-            const insert = '  ';
-            plain.value = plain.value.substring(0, start) + insert + plain.value.substring(end);
-            plain.selectionStart = plain.selectionEnd = start + insert.length;
-            scheduleRenderSave();
-          }
+        editor.on('change', () => {
+            clearTimeout(this.tid);
+            this.tid = setTimeout(() => {
+                render();
+                localStorage.setItem('c', editor.getValue());
+            }, 400);
         });
 
-        plain.addEventListener('input', scheduleRenderSave);
-      }
-
-      setEngineBadge();
+        render();
     }
 
-    const scheduleRenderSave = debounce(() => {
-      render();
-      localStorage.setItem('c', getValue());
-    }, 350);
+    function apply() {
+        document.body.classList.toggle('dark-mode', state.dark);
+        document.getElementById('dark-toggle').textContent = state.dark ? '☀️' : '🌙';
 
-    function debounce(fn, wait){
-      let t;
-      return (...args) => {
-        clearTimeout(t);
-        t = setTimeout(()=>fn(...args), wait);
-      };
-    }
+        editor.setOption('theme', state.dark ? 'monokai' : 'default');
 
-    function apply(){
-      document.body.classList.toggle('dark-mode', state.dark);
-      document.getElementById('dark-toggle').textContent = state.dark ? '☀️' : '🌙';
-
-      setForceThemeBtn();
-
-      document.getElementById('font-size-val').textContent = state.font + 'px';
-      document.getElementById('scale-val').textContent = Math.round(state.scale * 100) + '%';
-
-      if(editorEngine === 'codemirror' && cm){
         document.querySelector('.CodeMirror').style.fontSize = state.font + 'px';
-        cm.setOption('theme', state.dark ? 'monokai' : 'default');
-      }else{
-        plain.style.fontSize = state.font + 'px';
-      }
+        document.getElementById('font-size-val').textContent = state.font + 'px';
 
-      document.getElementById('viewport').style.transform = `scale(${state.scale})`;
-      setVWidth(state.v === '100' ? '100%' : state.v + 'px', state.v);
+        document.getElementById('viewport').style.transform = `scale(${state.scale})`;
+        document.getElementById('scale-val').textContent = Math.round(state.scale * 100) + '%';
 
-      render();
+        setVWidth(state.v === '100' ? '100%' : state.v + 'px', state.v);
+        render();
     }
 
-    function toggleDarkMode(){
-      state.dark = !state.dark;
-      localStorage.setItem('d', String(state.dark));
-      apply();
+    function toggleDarkMode() {
+        state.dark = !state.dark;
+        localStorage.setItem('d', state.dark);
+        apply();
+        render();
     }
 
-    function adjustFont(diff){
-      state.font = Math.min(24, Math.max(12, state.font + diff));
-      localStorage.setItem('f', String(state.font));
-      apply();
+    function adjustFont(diff) {
+        state.font = Math.min(24, Math.max(12, state.font + diff));
+        localStorage.setItem('f', state.font);
+        apply();
     }
 
-    function adjustScale(diff){
-      state.scale = Math.min(2, Math.max(0.5, state.scale + diff));
-      localStorage.setItem('s', String(state.scale));
-      apply();
+    function adjustScale(diff) {
+        state.scale = Math.min(2, Math.max(0.5, state.scale + diff));
+        localStorage.setItem('s', state.scale);
+        apply();
     }
 
-    function setVWidth(width, mode){
-      state.v = mode;
-      localStorage.setItem('v', mode);
-      document.getElementById('viewport').style.width = width;
+    function setVWidth(width, mode) {
+        state.v = mode;
+        localStorage.setItem('v', mode);
 
-      document.querySelectorAll('.view-opt')
-        .forEach(btn => btn.classList.toggle('active', btn.id === 'view-' + mode));
+        document.getElementById('viewport').style.width = width;
+
+        document
+            .querySelectorAll('.view-opt')
+            .forEach(btn => btn.classList.toggle('active', btn.id === 'view-' + mode));
     }
 
-    function renderThemes(){
-      const grid = document.getElementById('theme-grid');
-      grid.innerHTML = '';
-      THEMES.forEach((theme, index) => {
-        const card = document.createElement('div');
-        card.className = 'theme-card' + (index === state.t ? ' active' : '');
-        card.innerHTML = `
-          <div class="theme-dot" style="background:${theme.h2};"></div>
-          <div class="theme-name">${theme.n}</div>
+    function render() {
+        const frame = document.getElementById('preview-frame');
+        const viewport = document.getElementById('viewport');
+        const doc = frame.contentDocument;
+        const code = editor.getValue();
+        const t = THEMES[state.t];
+
+        const css = `
+            <style>
+                body {
+                    font-family: 'Segoe UI', sans-serif;
+                    line-height: 1.8;
+                    color: #333;
+                    margin: 0;
+                    padding: 25px;
+                    background: transparent;
+                    overflow: visible;
+                }
+                .wrap {
+                    max-width: 800px;
+                    margin: 0 auto;
+                    padding-bottom: 50px;
+                }
+                br {
+                    display: block;
+                    margin: 15px 0;
+                    content: "";
+                }
+                img {
+                    max-width: 100%;
+                    width: 100%;
+                    height: auto;
+                    border-radius: 12px;
+                    display: block;
+                    margin: 25px auto;
+                    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+                    cursor: pointer;
+                }
+                h2 {
+                    color: ${t.h2};
+                    border-bottom: 3px solid ${t.h2};
+                    padding-bottom: 10px;
+                    margin: 55px 0 25px 0;
+                    font-size: 1.6rem;
+                }
+                h3 {
+                    color: ${t.h3};
+                    margin: 35px 0 15px 0;
+                    font-size: 1.3rem;
+                    border-left: 5px solid ${t.h3};
+                    padding-left: 10px;
+                }
+                a {
+                    color: ${t.h2};
+                    text-decoration: none;
+                    font-weight: 600;
+                }
+                .meta-box {
+                    background: ${t.m};
+                    padding: 25px;
+                    border-radius: 10px;
+                    margin-bottom: 35px;
+                    border: 1px solid #ddd;
+                }
+                .cta-btn {
+                    display: inline-flex;
+                    align-items: center;
+                    justify-content: center;
+                    width: 100%;
+                    max-width: 600px;
+                    background: ${t.c};
+                    color: #fff !important;
+                    padding: 18px;
+                    border-radius: 40px;
+                    font-weight: 800;
+                    font-size: 18px;
+                    text-decoration: none !important;
+                    box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+                    transition: 0.3s;
+                    margin: 20px auto;
+                }
+                .cta-btn:hover {
+                    transform: translateY(-5px);
+                    filter: brightness(1.1);
+                }
+                ${state.dark
+                    ? "body{background:#1e1e1e;color:#ddd;}.meta-box{background:#2a2a2a;border-color:#444;}"
+                    : ''}
+                .wp-block-image {
+                    margin: 0;
+                    padding: 0;
+                }
+            </style>
         `;
-        card.onclick = () => {
-          state.t = index;
-          localStorage.setItem('t', String(index));
-          renderThemes();
-          render();
+
+        doc.open();
+        doc.write(`
+            ${css}
+            <body>
+                <div class="wrap" id="wp-wrap">
+                    ${code}
+                </div>
+
+                <script>
+                    window.addEventListener('error', (e) => {
+                        if (e.message && e.message.includes('ResizeObserver')) {
+                            e.stopImmediatePropagation();
+                            return false;
+                        }
+                    });
+                <\/script>
+            </body>
+        `);
+        doc.close();
+
+        const syncHeight = () => {
+            const h = doc.documentElement.scrollHeight;
+            frame.style.height = h + 'px';
+            viewport.style.height = ((h + 100) * state.scale) + 'px';
         };
-        grid.appendChild(card);
-      });
+
+        setTimeout(syncHeight, 50);
+
+        if (doc.body) {
+            const observer = new ResizeObserver(syncHeight);
+            observer.observe(doc.body);
+        }
+
+        doc.body.onclick = (e) => {
+            if (e.target === doc.body || e.target.classList.contains('wrap')) {
+                openModal('img');
+                return;
+            }
+
+            const txt = e.target.innerText?.trim().slice(0, 20) || e.target.src;
+            if (!txt) return;
+
+            const cur = editor.getSearchCursor(txt, { line: 0, ch: 0 });
+
+            if (cur.findNext()) {
+                editor.setSelection(cur.from(), cur.to());
+                editor.scrollIntoView(cur.from(), 250);
+                editor.focus();
+            }
+        };
     }
 
-    function render(){
-      const frame = document.getElementById('preview-frame');
-      const viewport = document.getElementById('viewport');
-      const doc = frame.contentDocument;
-      const code = getValue();
-      const t = THEMES[state.t] || THEMES[0];
+    function renderThemes() {
+        const grid = document.getElementById('theme-grid');
+        grid.innerHTML = '';
 
-      // ✅ 핵심: 인라인 스타일이 있어도 테마가 먹게 만드는 오버라이드(토글)
-      const forceCSS = state.forceTheme ? `
-        .wrap h2{ color:${t.h2} !important; border-bottom-color:${t.h2} !important; }
-        .wrap h3{ color:${t.h3} !important; border-left-color:${t.h3} !important; }
-        .wrap a{ color:${t.h2} !important; }
-
-        /* (선택) 목차/박스에서 인라인 background-color가 너무 고정이면 아래 2줄을 켜도 됨 */
-        /* .wrap [style*="background-color"]{ background-color:${t.m} !important; } */
-        /* .wrap [style*="border-bottom"]{ border-bottom-color:${t.h2} !important; } */
-      ` : '';
-
-      const css = `
-      <style>
-        body{
-          font-family: "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
-          line-height: 1.8;
-          color: #333;
-          margin: 0;
-          padding: 25px;
-          background: transparent;
-        }
-        .wrap{ max-width: 820px; margin: 0 auto; padding-bottom: 60px; }
-        img{
-          max-width:100%; height:auto;
-          border-radius: 12px;
-          display:block; margin: 25px auto;
-          box-shadow: 0 6px 22px rgba(0,0,0,.12);
-        }
-        h2{
-          color:${t.h2};
-          border-bottom: 3px solid ${t.h2};
-          padding-bottom: 10px;
-          margin: 56px 0 24px 0;
-          font-size: 1.65rem;
-        }
-        h3{
-          color:${t.h3};
-          margin: 34px 0 14px 0;
-          font-size: 1.32rem;
-          border-left: 5px solid ${t.h3};
-          padding-left: 10px;
-        }
-        a{
-          color:${t.h2};
-          text-decoration:none;
-          font-weight: 700;
-        }
-        .meta-box{
-          background:${t.m};
-          padding: 22px;
-          border-radius: 12px;
-          margin: 18px 0 34px 0;
-          border: 1px solid rgba(0,0,0,.08);
-        }
-        .meta-desc-box{
-          background:${t.m};
-          border-left: 5px solid ${t.h2};
-          padding: 18px 20px;
-          margin: 18px 0 30px 0;
-          border-radius: 12px;
-          font-size: 14px;
-          color:#374151;
-        }
-        .meta-desc-title{
-          font-weight: 900;
-          font-size: 12px;
-          letter-spacing: .08em;
-          text-transform: uppercase;
-          color:${t.h3};
-          margin-bottom: 6px;
-        }
-        .cta-btn{
-          display:inline-flex;
-          align-items:center; justify-content:center;
-          width:100%;
-          max-width:600px;
-          background:${t.c};
-          color:#fff !important;
-          padding: 18px;
-          border-radius: 44px;
-          font-weight: 900;
-          font-size: 18px;
-          text-decoration:none !important;
-          box-shadow: 0 12px 24px rgba(0,0,0,.15);
-          transition: .25s;
-          margin: 20px auto;
-        }
-        .cta-btn:hover{ transform: translateY(-4px); filter: brightness(1.05); }
-
-        ${state.dark ? `
-          body{ color:#e5e7eb; }
-          .meta-box, .meta-desc-box{ background:#111827; color:#e5e7eb; border-color: rgba(255,255,255,.12); }
-        ` : ''}
-
-        ${forceCSS}
-      </style>`;
-
-      doc.open();
-      doc.write(`${css}<body><div class="wrap">${code}</div></body>`);
-      doc.close();
-
-      const syncHeight = () => {
-        const h = doc.documentElement.scrollHeight;
-        frame.style.height = h + 'px';
-        viewport.style.height = ((h + 110) * state.scale) + 'px';
-      };
-      setTimeout(syncHeight, 60);
-
-      if(doc.body && window.ResizeObserver){
-        const ro = new ResizeObserver(syncHeight);
-        ro.observe(doc.body);
-      }
+        THEMES.forEach((theme, index) => {
+            const card = document.createElement('div');
+            card.className = 'theme-card' + (index === state.t ? ' active' : '');
+            card.innerHTML = `
+                <div class="color-dot" style="background:${theme.h2}"></div>
+                <div style="font-size:0.7rem;font-weight:800;">${theme.n}</div>
+            `;
+            card.onclick = () => {
+                state.t = index;
+                localStorage.setItem('t', index);
+                renderThemes();
+                render();
+            };
+            grid.appendChild(card);
+        });
     }
 
-    function openModal(id){ document.getElementById('modal-' + id).classList.add('active'); }
-    function closeModal(id){ document.getElementById('modal-' + id).classList.remove('active'); }
+    function openModal(id) {
+        document.getElementById('modal-' + id).classList.add('active');
+    }
+
+    function closeModal(id) {
+        document.getElementById('modal-' + id).classList.remove('active');
+    }
 
     window.addEventListener('click', (e) => {
-      if(e.target.classList.contains('modal')) e.target.classList.remove('active');
+        if (e.target.classList.contains('modal')) {
+            e.target.classList.remove('active');
+        }
     });
+
     window.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape'){
-        document.querySelectorAll('.modal.active').forEach(m => m.classList.remove('active'));
-      }
+        if (e.key === 'Escape') {
+            document
+                .querySelectorAll('.modal.active')
+                .forEach(m => m.classList.remove('active'));
+        }
     });
 
-    function toast(msg){
-      const t = document.getElementById('toast');
-      t.textContent = msg;
-      t.classList.add('show');
-      setTimeout(()=>t.classList.remove('show'), 1800);
-    }
+    function wrapSelection(tag) {
+        const selection = editor.getSelection();
+        editor.replaceSelection(`<${tag}>${selection}</${tag}>`);
 
-    function copyHTML(){
-      navigator.clipboard.writeText(getValue()).then(()=>toast('Copied!'));
-    }
-    function saveToLocal(){
-      localStorage.setItem('c', getValue());
-      toast('Saved!');
-    }
-    function resetEditor(){
-      if(!confirm('리셋할까요? 작성 내용이 초기화됩니다.')) return;
-      localStorage.removeItem('c');
-      setValue(getDefault());
-      render();
-    }
-    function clearCache(){
-      if(!confirm('모든 설정/내용을 삭제하고 초기화할까요?')) return;
-      localStorage.clear();
-      location.reload();
-    }
-
-    function tryUndo(){
-      if(editorEngine === 'codemirror' && cm) cm.undo();
-      else toast('폴백 에디터: Ctrl+Z 사용');
-    }
-    function tryRedo(){
-      if(editorEngine === 'codemirror' && cm) cm.redo();
-      else toast('폴백 에디터: Ctrl+Y 사용');
-    }
-
-    function insAt(text){
-      if(editorEngine === 'codemirror' && cm){
-        const cur = cm.getCursor();
-        cm.replaceRange(text + '\n', cur);
-        cm.focus();
-      }else{
-        const start = plain.selectionStart;
-        const end = plain.selectionEnd;
-        const before = plain.value.slice(0, start);
-        const after = plain.value.slice(end);
-        const insert = text + '\n';
-        plain.value = before + insert + after;
-        plain.selectionStart = plain.selectionEnd = start + insert.length;
-        plain.focus();
-      }
-      scheduleRenderSave();
-    }
-
-    function wrapSelection(tag){
-      const open = `<${tag}>`;
-      const close = `</${tag}>`;
-
-      if(editorEngine === 'codemirror' && cm){
-        const sel = cm.getSelection();
-        cm.replaceSelection(open + sel + close);
-        if(!sel){
-          const cur = cm.getCursor();
-          cm.setCursor({ line: cur.line, ch: cur.ch - close.length });
+        if (!selection) {
+            const cur = editor.getCursor();
+            editor.setCursor(cur.line, cur.ch - (tag.length + 3));
         }
-        cm.focus();
-      }else{
-        const start = plain.selectionStart;
-        const end = plain.selectionEnd;
-        const sel = plain.value.slice(start, end);
-        const insert = open + sel + close;
-        plain.value = plain.value.slice(0, start) + insert + plain.value.slice(end);
-        if(!sel){
-          plain.selectionStart = plain.selectionEnd = start + open.length;
-        }else{
-          plain.selectionStart = start;
-          plain.selectionEnd = start + insert.length;
+
+        editor.focus();
+    }
+
+    function insHighlight() {
+        const selection = editor.getSelection();
+        const open =
+            '<span style="background-color:#fff3cd; padding:2px 6px; border-radius:6px;"><b>';
+        const close = '</b></span>';
+
+        editor.replaceSelection(open + selection + close);
+
+        if (!selection) {
+            const cur = editor.getCursor();
+            editor.setCursor(cur.line, cur.ch - close.length);
         }
-        plain.focus();
-      }
-      scheduleRenderSave();
+
+        editor.focus();
     }
 
-    function insHighlight(){
-      const open = '<span style="background-color:#fff3cd; padding:2px 6px; border-radius:8px;"><b>';
-      const close = '</b></span>';
-      if(editorEngine === 'codemirror' && cm){
-        const sel = cm.getSelection();
-        cm.replaceSelection(open + sel + close);
-        if(!sel){
-          const cur = cm.getCursor();
-          cm.setCursor({ line: cur.line, ch: cur.ch - close.length });
+    function insAt(text) {
+        editor.replaceRange(text + '\n', editor.getCursor());
+        editor.focus();
+    }
+
+    function insH() {
+        const level = document.getElementById('h-lv').value;
+        const text = document.getElementById('h-txt').value;
+
+        insAt(`<h${level}>${text}</h${level}>`);
+        closeModal('h');
+    }
+
+    function insImg() {
+        const url = document.getElementById('img-url').value;
+        const alt = document.getElementById('img-alt').value;
+        const isWP = document.getElementById('wp-mode').checked;
+
+        let html = '';
+
+        if (isWP) {
+            html =
+                `<figure class="wp-block-image size-full">
+                    <img src="${url}" alt="${alt}"
+                         class="wp-image-0"
+                         style="width: 100%; height: auto; border-radius: 12px;"/>
+                 </figure>`;
+        } else {
+            html = `<img src="${url}" alt="${alt}">`;
         }
-        cm.focus();
-      }else{
-        const start = plain.selectionStart;
-        const end = plain.selectionEnd;
-        const sel = plain.value.slice(start, end);
-        const insert = open + sel + close;
-        plain.value = plain.value.slice(0, start) + insert + plain.value.slice(end);
-        plain.selectionStart = plain.selectionEnd = start + open.length;
-        plain.focus();
-      }
-      scheduleRenderSave();
+
+        insAt(html);
+        closeModal('img');
     }
 
-    function insH(){
-      const lv = document.getElementById('h-lv').value;
-      const txt = document.getElementById('h-txt').value || '제목';
-      insAt(`<h${lv}>${txt}</h${lv}>`);
-      closeModal('h');
+    function insCTA() {
+        const url = document.getElementById('cta-url').value;
+        const txt = document.getElementById('cta-txt').value;
+        const target = document.getElementById('cta-target').value;
+
+        insAt(`
+<div style="text-align:center; margin:40px 0;">
+  <a href="${url}" target="${target}" class="cta-btn">
+    🛒 ${txt} ›
+  </a>
+</div>`);
+        closeModal('cta');
     }
 
-    function insImg(){
-      const url = document.getElementById('img-url').value.trim();
-      const alt = document.getElementById('img-alt').value.trim() || '이미지';
-      const w = Math.min(100, Math.max(20, parseInt(document.getElementById('img-w').value || '100', 10)));
-      if(!url){ toast('이미지 URL이 비었어요'); return; }
-      insAt(`<img src="${url}" alt="${alt}" style="width:${w}%; height:auto;">`);
-      closeModal('img');
+    function insBR() {
+        const count = document.getElementById('br-cnt').value;
+        insAt('<br>'.repeat(count));
+        closeModal('br');
     }
 
-    function insCTA(){
-      const txt = document.getElementById('cta-txt').value || '버튼';
-      const url = document.getElementById('cta-url').value || '#';
-      const bg = document.getElementById('cta-bg').value || '#6366f1';
-      const fg = document.getElementById('cta-fg').value || '#ffffff';
+    function insTbl() {
+        const rows = parseInt(document.getElementById('tbl-r').value, 10);
+        const cols = parseInt(document.getElementById('tbl-c').value, 10);
 
-      const html = `
-<div style="text-align:center; margin: 26px 0;">
-  <a href="${url}" class="cta-btn" style="background:${bg}; color:${fg} !important;">${txt}</a>
-</div>`.trim();
+        let html = '<table><thead><tr>';
 
-      insAt(html);
-      closeModal('cta');
+        for (let j = 0; j < cols; j++) {
+            html += '<th>제목</th>';
+        }
+
+        html += '</tr></thead><tbody>';
+
+        for (let i = 0; i < rows; i++) {
+            html += '<tr>';
+            for (let j = 0; j < cols; j++) {
+                html += '<td>내용</td>';
+            }
+            html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+
+        insAt(html);
+        closeModal('tbl');
     }
 
-    function insBR(){
-      const cnt = parseInt(document.getElementById('br-cnt').value, 10);
-      insAt('<br>'.repeat(cnt));
-      closeModal('br');
+    function insURL() {
+        const url = document.getElementById('url-val').value;
+        const txt = document.getElementById('url-txt').value;
+        const target = document.getElementById('url-target').value;
+
+        insAt(`<a href="${url}" target="${target}">${txt}</a>`);
+        closeModal('url');
     }
 
-    function insTbl(){
-      const rows = Math.max(1, parseInt(document.getElementById('tbl-r').value || '3',10));
-      const cols = Math.max(1, parseInt(document.getElementById('tbl-c').value || '2',10));
-      let html = '<table><thead><tr>';
-      for(let j=0;j<cols;j++) html += '<th>제목</th>';
-      html += '</tr></thead><tbody>';
-      for(let i=0;i<rows;i++){
-        html += '<tr>';
-        for(let j=0;j<cols;j++) html += '<td>내용</td>';
-        html += '</tr>';
-      }
-      html += '</tbody></table>';
-      insAt(html);
-      closeModal('tbl');
+    function insertFairTrade() {
+        insAt(
+            '<p style="color: #888; font-size: 13px; text-align: center; margin-top: 50px;">' +
+            '파트너스 활동의 일환으로 일정액의 수수료를 제공받을 수 있습니다.' +
+            '</p>'
+        );
     }
 
-    function generateTOC(){
-      const doc = document.getElementById('preview-frame').contentDocument;
-      const headings = doc.querySelectorAll('h2, h3');
-      if(!headings.length){ toast('H2/H3가 없어요'); return; }
+    function generateTOC() {
+        const doc = document.getElementById('preview-frame').contentDocument;
+        const headings = doc.querySelectorAll('h2, h3');
 
-      let toc = '<div class="meta-box"><strong>📑 목차</strong><br>';
-      headings.forEach((h,i)=>{
-        toc += `<a href="#s${i+1}" style="display:block;margin-top:6px;padding-left:${h.tagName==='H3'?'18px':'0'};">- ${h.innerText}</a>`;
-      });
-      toc += '</div>';
+        if (!headings.length) return;
 
-      let content = getValue();
-      headings.forEach((h,i)=>{
-        const tag = `<${h.tagName.toLowerCase()}`;
-        const re = new RegExp(tag + '(?![^>]*id=)', 'i');
-        content = content.replace(re, `${tag} id="s${i+1}"`);
-      });
-      setValue(content);
-      insAt(toc);
-      closeModal('toc');
-      toast('목차 삽입됨');
+        let tocHtml = '<div class="meta-box"><strong>📑 목차</strong><br>';
+
+        headings.forEach((h, i) => {
+            tocHtml += `
+<a href="#s${i + 1}"
+   style="display:block;margin-top:5px;
+          padding-left:${h.tagName === 'H3' ? '20px' : '0'};">
+   - ${h.innerText}
+</a>`;
+        });
+
+        tocHtml += '</div>';
+
+        let content = editor.getValue();
+
+        headings.forEach((h, i) => {
+            const tag = `<${h.tagName.toLowerCase()}`;
+            const regex = new RegExp(tag + '(?![^>]*id=)', 'i');
+            content = content.replace(regex, `${tag} id="s${i + 1}"`);
+        });
+
+        editor.setValue(content);
+        insAt(tocHtml);
+        closeModal('toc');
     }
 
-    function setupResizer(){
-      const resizer = document.getElementById('resizer');
-      const left = document.getElementById('editor-pane');
-      const right = document.getElementById('preview-pane');
+    function makeJSONLD() {
+        const type = document.getElementById('seo-type').value;
+        const doc = document.getElementById('preview-frame').contentDocument;
 
-      resizer.onmousedown = (e) => {
-        const startX = e.clientX;
-        const startW = left.offsetWidth;
-
-        document.onmousemove = (me) => {
-          const total = resizer.parentNode.offsetWidth;
-          const diff = me.clientX - startX;
-          const percent = (startW + diff) / total * 100;
-          left.style.width = Math.max(25, Math.min(75, percent)) + '%';
-          right.style.width = (100 - Math.max(25, Math.min(75, percent))) + '%';
-          if(editorEngine === 'codemirror' && cm) cm.refresh();
+        let schema = {
+            '@context': 'https://schema.org',
+            '@type': type
         };
 
-        document.onmouseup = () => {
-          document.onmousemove = null;
-          document.onmouseup = null;
-          if(editorEngine === 'codemirror' && cm) cm.refresh();
-        };
-      };
+        if (type === 'FAQPage') {
+            const faqs = [];
+            const elements = Array.from(doc.querySelectorAll('p, div, strong, b'));
+
+            elements.forEach((el, i) => {
+                const txt = el.innerText.trim();
+
+                if (/^Q\d+\./.test(txt)) {
+                    for (let j = i + 1; j < Math.min(i + 5, elements.length); j++) {
+                        const aTxt = elements[j].innerText.trim();
+
+                        if (aTxt.startsWith('A.')) {
+                            faqs.push({
+                                '@type': 'Question',
+                                name: txt.replace(/^Q\d+\.\s*/, '').trim(),
+                                acceptedAnswer: {
+                                    '@type': 'Answer',
+                                    text: aTxt.replace(/^A\.\s*/, '').trim()
+                                }
+                            });
+                            break;
+                        }
+                    }
+                }
+            });
+
+            if (faqs.length > 0) {
+                schema.mainEntity = faqs;
+            }
+        } else {
+            schema.headline =
+                doc.querySelector('h2')?.innerText || '블로그 포스팅 제목';
+        }
+
+        state.jsonld =
+            `<script type="application/ld+json">` +
+            `${JSON.stringify(schema, null, 2)}<\/script>`;
+
+        document.getElementById('seo-p').innerText = state.jsonld;
+        document.getElementById('seo-ins').style.display = 'block';
     }
 
-    function getDefault(){
-      return `<div style="max-width: 820px; margin: 0 auto; line-height: 1.8; color: #333;">
-  <div class="meta-desc-box">
-    <div class="meta-desc-title">META DESCRIPTION</div>
-    <p style="margin:0;">이 영역은 메타디스크립션 예시입니다. 핵심 키워드를 자연스럽게 2~3문장으로 요약해 주세요.</p>
+    function insJSONLD() {
+        insAt(state.jsonld);
+        closeModal('seo');
+    }
+
+    function copyHTML() {
+        navigator.clipboard
+            .writeText(editor.getValue())
+            .then(() => toast('Copied!'));
+    }
+
+    function saveToLocal() {
+        localStorage.setItem('c', editor.getValue());
+        toast('Saved!');
+    }
+
+    function resetEditor() {
+        if (!confirm('리셋하시겠습니까? (작성 중인 내용이 초기화됩니다)')) return;
+
+        localStorage.removeItem('c');
+        editor.setValue(getDefault());
+        render();
+    }
+
+    function clearCache() {
+        if (!confirm('모든 설정(테마, 글자 크기 등)과 저장된 내용을 완전히 삭제하고 초기화할까요?')) return;
+
+        localStorage.clear();
+        location.reload();
+    }
+
+    function toast(msg) {
+        const t = document.getElementById('toast');
+        t.textContent = msg;
+        t.classList.add('show');
+
+        setTimeout(() => t.classList.remove('show'), 2000);
+    }
+
+    function setupRes() {
+        const resizer = document.getElementById('resizer');
+        const leftPane = document.getElementById('editor-pane');
+        const rightPane = document.getElementById('preview-pane');
+
+        resizer.onmousedown = (e) => {
+            const startX = e.clientX;
+            const startWidth = leftPane.offsetWidth;
+
+            document.onmousemove = (me) => {
+                const parentWidth = resizer.parentNode.offsetWidth;
+                const diffX = me.clientX - startX;
+                const percent = (startWidth + diffX) / parentWidth * 100;
+
+                leftPane.style.width = percent + '%';
+                rightPane.style.width = (100 - percent) + '%';
+            };
+
+            document.onmouseup = () => {
+                document.onmousemove = null;
+                editor.refresh();
+            };
+        };
+    }
+
+    function getDefault() {
+        return `<div style="max-width: 800px; margin: 0 auto; line-height: 1.8; color: #333;">
+  <p style="background-color: #E8F5E9; padding: 20px; border-radius: 8px; font-size: 15px; margin-bottom: 35px; border: 1px solid #dcdcdc; line-height: 1.8;">
+    <strong>ISA 계좌</strong>에 대해 궁금하신가요? 2026년 기준, 주식과 ETF 투자의 필수품이 된 중개형 ISA의 비과세 혜택과 절세 효과를 완벽하게 분석했습니다. 남들 다 받는 세금 혜택, 당신만 놓치고 있을 수 있습니다.
+  </p>
+  <p style="font-size: 16px; line-height: 1.8; margin-bottom: 30px; font-weight: 600; color: #2c3e50;">
+    배당금 1,000만 원 받았을 때, 일반 계좌는 154만 원을 세금으로 냅니다. 💸 하지만 ISA 계좌는 세금이 '0원'일 수도 있습니다. 똑같은 수익을 내고도 세금 때문에 최종 자산이 수천만 원 차이 나는 이유, 바로 이 통장 하나 때문입니다.
+  </p>
+  <div style="background-color: #f8f9fa; padding: 25px; border-radius: 10px; margin-bottom: 40px;">
+    <strong>📑 목차</strong>
+    <ol style="margin: 0; padding-left: 20px; line-height: 2.0;">
+      <li><a href="#section1">ISA 계좌, 도대체 왜 필수인가?</a></li>
+      <li><a href="#section2">중개형 ISA vs 신탁형/일임형 차이점</a></li>
+      <li><a href="#section3">⚠️ 3년 의무 가입 기간의 함정</a></li>
+    </ol>
   </div>
-
-  <h2 style="color:#2c3e50; border-bottom:3px solid #E8F5E9;">에디터 사용법(인라인 예시)</h2>
-  <p>상단 툴바에서 다양한 기능을 사용할 수 있습니다.</p>
-
-  <h3 style="color:#2E7D32;">주요 기능</h3>
-  <ul>
-    <li>🌈 테마 갤러리</li>
-    <li>🖼️ 이미지 삽입</li>
-    <li>✨ 버튼 생성</li>
-    <li>📑 자동 목차</li>
-    <li>💾 로컬 저장/복사</li>
-  </ul>
-
+  <h2 id="section1">ISA 계좌, 도대체 왜 필수인가?</h2>
+  <p><span style="background-color:#fff3cd; padding:2px 6px; border-radius:6px;"><b>ISA 계좌</b></span>(개인종합자산관리계좌)는 하나의 통장에서 예금, 적금, 주식, ETF 등 다양한 금융 상품을 굴릴 수 있는 만능 통장입니다.</p>
+  <h3>손실은 빼고 이익에만 과세</h3>
+  <p>일반 주식 계좌와 달리 ISA는 손익 통산을 통해 세금을 획기적으로 줄여줍니다.</p>
   <div style="text-align:center; margin:34px 0;">
-    <a href="https://example.com" class="cta-btn">🛒 버튼 예시</a>
+    <a href="https://www.coupang.com" class="cta-btn">💰 내 절세 금액 30초 계산하기 ›</a>
   </div>
-
-  <h2>시작하기</h2>
-  <p>이제 이 내용을 지우고 자유롭게 작성해보세요!</p>
+  <h2 id="section2">중개형 ISA vs 신탁형/일임형 차이점</h2>
+  <p>최근 가입자의 80% 이상이 직접 주식 매매가 가능한 <b>중개형 ISA</b>를 선택하고 있습니다.</p>
+  <h2 id="section3">⚠️ 3년 의무 가입 기간의 함정</h2>
+  <p>비과세 혜택을 위해서는 3년의 가입 유지가 필수입니다.</p>
+  <div style="background-color: #f5f5f5; padding: 20px; border-radius: 8px; margin: 40px 0; font-size: 13px; color: #666;">
+    <p><strong>⚠️ 면책 조항:</strong> 본 콘텐츠는 정보 제공 목적으로만 작성되었습니다.</p>
+  </div>
 </div>`;
     }
 
-    function boot(){
-      initEditor();
-      renderThemes();
-      setupResizer();
-      apply();
-      render();
-    }
-    boot();
-  </script>
-</body>
-</html>
+    init();
+</script>
